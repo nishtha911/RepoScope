@@ -1,0 +1,1 @@
+"""FastAPI route detection will be implemented in the ingestion pipeline."""
