@@ -1,1 +1,0 @@
-"""RepoScope API application."""

@@ -1,1 +1,0 @@
-"""Chunking, ranking, embedding, and grounded context assembly."""

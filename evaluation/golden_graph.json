@@ -1,9 +1,0 @@
-{
-  "symbols": [
-    {"name": "load_repository", "kind": "function", "file": "repo.py"},
-    {"name": "parse_python", "kind": "function", "file": "parser.py"}
-  ],
-  "edges": [
-    {"source": "load_repository", "target": "parse_python", "type": "CALLS"}
-  ]
-}
