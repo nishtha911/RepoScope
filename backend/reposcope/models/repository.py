@@ -1,7 +1,7 @@
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from repolens.models.base import Base
+from reposcope.models.base import Base
 
 
 class Repository(Base):

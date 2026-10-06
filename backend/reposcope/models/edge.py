@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from repolens.models.base import Base
+from reposcope.models.base import Base
 
 
 class Edge(Base):
@@ -33,5 +33,5 @@ class Edge(Base):
     """ex-def main():
            load_data()
            
-           will be represented as main →(edge)-> load_data ;kind: calls, main is calling load data
+           will be represented as main â†’(edge)-> load_data ;kind: calls, main is calling load data
     """ 

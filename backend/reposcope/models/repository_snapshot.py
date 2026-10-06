@@ -11,7 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from repolens.models.base import Base
+from reposcope.models.base import Base
 
 
 class RepositorySnapshot(Base):

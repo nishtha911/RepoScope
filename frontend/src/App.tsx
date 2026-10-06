@@ -18,11 +18,11 @@ export default function App() {
   ];
 
   const recentSymbols = [
-    { name: 'SymbolResolver.resolve_calls()', type: 'METHOD', confidence: 'EXACT', file: 'backend/repolens/parsing/resolver.py', line: 142 },
-    { name: 'GraphRAGPipeline.build_evidence_pack()', type: 'METHOD', confidence: 'EXACT', file: 'backend/repolens/rag/pipeline.py', line: 88 },
-    { name: 'GitScanner.scan_repository()', type: 'FUNCTION', confidence: 'EXACT', file: 'backend/repolens/ingestion/scanner.py', line: 53 },
-    { name: 'SymbolChunker.chunk_symbols()', type: 'FUNCTION', confidence: 'INFERRED', file: 'backend/repolens/retrieval/chunker.py', line: 29 },
-    { name: 'PRImpactAnalyzer.calculate_blast_radius()', type: 'METHOD', confidence: 'EXACT', file: 'backend/repolens/recommendations/scorer.py', line: 110 }
+    { name: 'SymbolResolver.resolve_calls()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/parsing/resolver.py', line: 142 },
+    { name: 'GraphRAGPipeline.build_evidence_pack()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/rag/pipeline.py', line: 88 },
+    { name: 'GitScanner.scan_repository()', type: 'FUNCTION', confidence: 'EXACT', file: 'backend/reposcope/ingestion/scanner.py', line: 53 },
+    { name: 'SymbolChunker.chunk_symbols()', type: 'FUNCTION', confidence: 'INFERRED', file: 'backend/reposcope/retrieval/chunker.py', line: 29 },
+    { name: 'PRImpactAnalyzer.calculate_blast_radius()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/recommendations/scorer.py', line: 110 }
   ];
 
   const recentPRImpacts = [

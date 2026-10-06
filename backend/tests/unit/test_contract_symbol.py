@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from repolens.contracts.symbol import Symbol
+from reposcope.contracts.symbol import Symbol
 
 
 def symbol_data():

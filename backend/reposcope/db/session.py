@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from repolens.config import DATABASE_URL
+from reposcope.config import DATABASE_URL
 
 
 # Engine: manages database connectivity and connection pooling.

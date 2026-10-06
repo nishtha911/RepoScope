@@ -7,7 +7,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import text
-from repolens.db.session import engine
+from reposcope.db.session import engine
 
 with engine.connect() as connection: #import the engine directly and obtain a connection to db
     version = connection.execute( #.execute sends this query to db and gets result object

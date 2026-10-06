@@ -8,8 +8,8 @@ if str(backend_dir) not in sys.path:
 
 from sqlalchemy import select
 
-from repolens.db import SessionLocal
-from repolens.models import Repository, File
+from reposcope.db import SessionLocal
+from reposcope.models import Repository, File
 
 
 with SessionLocal() as session:

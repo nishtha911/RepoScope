@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from repolens.contracts.chunk import Chunk
+from reposcope.contracts.chunk import Chunk
 
 
 def chunk_data():

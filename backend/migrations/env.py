@@ -1,7 +1,7 @@
 from alembic import context
 
-from repolens.db import engine
-from repolens.models import Base
+from reposcope.db import engine
+from reposcope.models import Base
 
 target_metadata = Base.metadata
 
