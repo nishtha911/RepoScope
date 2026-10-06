@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "repositories": [
+    {
+      "name": "psf/requests",
+      "url": "https://github.com/psf/requests",
+      "commit_sha": "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60",
+      "purpose": "HTTP-client code search and workflow tracing"
+    },
+    {
+      "name": "pallets/flask",
+      "url": "https://github.com/pallets/flask",
+      "commit_sha": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+      "purpose": "Web-framework code and application structure"
+    },
+    {
+      "name": "pallets/click",
+      "url": "https://github.com/pallets/click",
+      "commit_sha": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "purpose": "CLI commands, parameters, and relationships"
+    },
+    {
+      "name": "pallets/itsdangerous",
+      "url": "https://github.com/pallets/itsdangerous",
+      "commit_sha": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "purpose": "Signing and serialization workflows"
+    },
+    {
+      "name": "theskumar/python-dotenv",
+      "url": "https://github.com/theskumar/python-dotenv",
+      "commit_sha": "0b2880591780a426b0551436f47a17e7a76d954f",
+      "purpose": "Configuration loading and parsing"
+    }
+  ]
+}
