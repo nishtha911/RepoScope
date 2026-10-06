@@ -36,9 +36,9 @@ export default function App() {
       
       {/* TOP HEADER */}
       <header className="bauhaus-border-b" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', backgroundColor: '#ffffff' }}>
-        <div className="bauhaus-border-r" style={{ padding: '20px 28px', backgroundColor: '#000000', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '24px', height: '24px', backgroundColor: '#ffffff' }}></div>
-          <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '0.12em' }}>REPOSCOPE</span>
+        <div className="bauhaus-border-r" style={{ padding: '16px 32px', backgroundColor: '#000000', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <img src="/image.png" alt="RepoScope Logo" style={{ width: '54px', height: '54px', objectFit: 'contain', border: '2px solid #ffffff', backgroundColor: '#ffffff', padding: '2px' }} />
+          <span style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.14em' }}>REPOSCOPE</span>
         </div>
 
         <div className="bauhaus-border-r" style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
