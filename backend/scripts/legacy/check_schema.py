@@ -7,7 +7,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
     
 from sqlalchemy import inspect, text
-from repolens.db import engine
+from reposcope.db import engine
 
 with engine.connect() as connection:
     tables = inspect(connection).get_table_names()

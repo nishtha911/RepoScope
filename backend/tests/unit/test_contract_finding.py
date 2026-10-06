@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from repolens.contracts.finding import Finding
+from reposcope.contracts.finding import Finding
 
 
 def finding_data():

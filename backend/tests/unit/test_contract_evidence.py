@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from repolens.contracts.evidence import Evidence
+from reposcope.contracts.evidence import Evidence
 
 
 def evidence_data():

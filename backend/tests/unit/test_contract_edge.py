@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from repolens.contracts.edge import Edge
+from reposcope.contracts.edge import Edge
 
 
 def edge_data():
