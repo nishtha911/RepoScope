@@ -7,20 +7,30 @@ from repolens.models.base import Base
 class File(Base):
     __tablename__ = "files"
 
-    id: Mapped[int] = mapped_column(primary_key=True) #PK, unique identifier of each file
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     repository_id: Mapped[int] = mapped_column(
         ForeignKey("repositories.id"),
         index=True,
-    ) #FK to repo, which repo owns this file
+    )
 
-    path: Mapped[str] = mapped_column(Text) #path
-    language: Mapped[str | None] = mapped_column(String(50)) #which programming language
+    snapshot_id: Mapped[int | None] = mapped_column(
+    ForeignKey(
+        "repository_snapshots.id",
+        name="fk_files_snapshot_id",
+    ),
+    nullable=True,
+    index=True,
+)
+
+    path: Mapped[str] = mapped_column(Text)
+
+    language: Mapped[str | None] = mapped_column(String(50))
 
     __table_args__ = (
         UniqueConstraint(
             "repository_id",
             "path",
-            name="uq_files_repository_path",   #repo_id+path must be unique for each file
+            name="uq_files_repository_path",
         ),
     )
