@@ -74,4 +74,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 # --- Routers ---
+from reposcope.api import repos
+
 app.include_router(health.router, prefix="/api")
+app.include_router(repos.router, prefix="/api")
+
