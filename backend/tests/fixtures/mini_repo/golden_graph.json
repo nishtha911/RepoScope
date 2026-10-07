@@ -1,0 +1,84 @@
+{
+  "repository": "tests/fixtures/mini_repo",
+  "files_count": 5,
+  "symbols_count": 8,
+  "symbols": [
+    {
+      "id": 1,
+      "file_id": 1,
+      "name": "User",
+      "kind": "CLASS",
+      "file_path": "models.py",
+      "start_line": 1,
+      "end_line": 5
+    },
+    {
+      "id": 2,
+      "file_id": 1,
+      "name": "get_user_by_id",
+      "kind": "FUNCTION",
+      "file_path": "models.py",
+      "start_line": 7,
+      "end_line": 12
+    },
+    {
+      "id": 3,
+      "file_id": 2,
+      "name": "UserService",
+      "kind": "CLASS",
+      "file_path": "services.py",
+      "start_line": 1,
+      "end_line": 15
+    },
+    {
+      "id": 4,
+      "file_id": 2,
+      "name": "fetch_profile",
+      "kind": "METHOD",
+      "file_path": "services.py",
+      "start_line": 5,
+      "end_line": 10
+    },
+    {
+      "id": 5,
+      "file_id": 3,
+      "name": "read_user_endpoint",
+      "kind": "FUNCTION",
+      "file_path": "api.py",
+      "start_line": 4,
+      "end_line": 9
+    },
+    {
+      "id": 6,
+      "file_id": 4,
+      "name": "test_fetch_profile",
+      "kind": "FUNCTION",
+      "file_path": "test_services.py",
+      "start_line": 3,
+      "end_line": 8
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "source_symbol_id": 4,
+      "target_symbol_id": 2,
+      "kind": "CALLS",
+      "confidence": 1.0
+    },
+    {
+      "id": 2,
+      "source_symbol_id": 5,
+      "target_symbol_id": 4,
+      "kind": "CALLS",
+      "confidence": 1.0
+    },
+    {
+      "id": 3,
+      "source_symbol_id": 6,
+      "target_symbol_id": 4,
+      "kind": "TESTS",
+      "confidence": 1.0
+    }
+  ]
+}
