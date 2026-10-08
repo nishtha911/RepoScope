@@ -16,5 +16,5 @@ class Finding(BaseModel):
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
 
-    score: float | None = Field(default=None, ge=0)
-    confidence: float | None = Field(default=None, ge=0, le=1)
+    score: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    confidence: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)

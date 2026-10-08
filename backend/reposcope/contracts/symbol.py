@@ -3,6 +3,9 @@ from typing import Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+from reposcope.contracts.vocabulary import SymbolKind
+
+
 class Symbol(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -13,7 +16,7 @@ class Symbol(BaseModel):
     id: int | None = Field(default=None, gt=0)
     file_id: int = Field(gt=0)
     name: str = Field(min_length=1)
-    kind: str = Field(min_length=1)
+    kind: SymbolKind
     start_line: int = Field(ge=1)
     end_line: int = Field(ge=1)
 
