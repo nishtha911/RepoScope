@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from reposcope.api import health
+from reposcope.contracts.api import ErrorDetail, ErrorResponse
 
 # NOTE: do not import reposcope.config here; it raises at import time when
 # DATABASE_URL is missing. Import it only in routes that need the database.
@@ -32,6 +33,7 @@ HTTP_ERROR_CODES = {
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",
     409: "CONFLICT",
+    422: "VALIDATION_ERROR",
     429: "RATE_LIMITED",
 }
 
@@ -39,17 +41,10 @@ HTTP_ERROR_CODES = {
 def error_response(
     status: int, code: str, message: str, details: dict[str, Any] | None = None
 ) -> JSONResponse:
-    return JSONResponse(
-        status_code=status,
-        content={
-            "error": {
-                "code": code,
-                "message": message,
-                "details": details or {},
-                "status": status,
-            }
-        },
-    )
+    envelope = ErrorResponse(error=ErrorDetail(
+        code=code, message=message, details=details or {}, status=status,
+    ))
+    return JSONResponse(status_code=status, content=envelope.model_dump(mode="json"))
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -78,4 +73,3 @@ from reposcope.api import repos
 
 app.include_router(health.router, prefix="/api")
 app.include_router(repos.router, prefix="/api")
-

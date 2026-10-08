@@ -1,5 +1,8 @@
 # RepoScope OpenAPI Specification & Contract Documentation
-Version: 1.0.0
+Version: 1.1.0 (proposed; cross-track review pending)
+
+See `shared-contracts.md` for vocabulary, nullability, snapshot semantics and bounds.
+These endpoints remain mock implementations.
 
 ## Standard Error Envelope
 All error responses return HTTP status >= 400 and adhere to the standard JSON error envelope:
@@ -68,6 +71,7 @@ Standard error codes:
     "default_branch": "main",
     "status": "ready",
     "head_sha": "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60",
+    "snapshot_id": 1,
     "symbol_count": 3412,
     "file_count": 142
   }
@@ -80,9 +84,10 @@ Standard error codes:
     "symbols": [
       {
         "id": 101,
+        "file_id": 12,
         "name": "resolve_calls",
         "qualname": "SymbolResolver.resolve_calls",
-        "kind": "METHOD",
+        "kind": "method",
         "file_path": "backend/reposcope/parsing/resolver.py",
         "start_line": 142,
         "end_line": 180
@@ -98,8 +103,10 @@ Standard error codes:
   {
     "id": 101,
     "file_id": 12,
+    "qualname": "SymbolResolver.resolve_calls",
+    "file_path": "backend/reposcope/parsing/resolver.py",
     "name": "resolve_calls",
-    "kind": "METHOD",
+    "kind": "method",
     "start_line": 142,
     "end_line": 180,
     "signature": "def resolve_calls(self, ast_tree) -> list[Edge]:",
@@ -125,6 +132,8 @@ Standard error codes:
   ```
 
 `GET /api/symbols/{id}/impact?depth={int}`
+
+Planned endpoint: not implemented by the current mock router or this contracts patch.
 - **Response 200 OK:**
   ```json
   {
@@ -176,7 +185,7 @@ Standard error codes:
 - **Response 200 OK:**
   ```json
   {
-    "answer": "The scope resolver matches function calls against the symbol table [E1]. If multiple candidates exist, it marks confidence as INFERRED [E2].",
+    "answer": "The scope resolver matches function calls against the symbol table [E1].",
     "evidence": [
       {
         "evidence_id": "E1",
