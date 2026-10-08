@@ -132,25 +132,70 @@ export default function App() {
         </div>
       </header>
 
-      {/* REGISTER REPO EXPANDABLE PANEL */}
+      {/* REGISTER REPO EXPANDABLE PANEL WITH CLONE SPINNER & INDEXING BADGES */}
       {isRegistering && (
         <div className="bauhaus-border-b" style={{ padding: '24px 32px', backgroundColor: '#f5f5f5' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '12px' }}>REGISTER NEW REPOSITORY</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.1em' }}>REGISTER NEW REPOSITORY</h3>
+            <span style={{ 
+              fontSize: '0.75rem', 
+              fontWeight: 800, 
+              padding: '4px 12px', 
+              backgroundColor: registerMutation.isPending ? '#000000' : '#e2e8f0', 
+              color: registerMutation.isPending ? '#ffffff' : '#000000',
+              fontFamily: 'var(--font-mono)'
+            }}>
+              {registerMutation.isPending ? '[ STATUS: INDEXING IN PROGRESS ]' : '[ STATUS: READY FOR INGESTION ]'}
+            </span>
+          </div>
+
           <div style={{ display: 'flex', gap: '12px', maxWidth: '800px' }}>
             <input 
               className="bauhaus-input"
               placeholder="e.g. https://github.com/owner/repository.git"
               value={newRepoUrl}
               onChange={(e) => setNewRepoUrl(e.target.value)}
+              disabled={registerMutation.isPending}
             />
             <button 
               className="bauhaus-btn-invert" 
               onClick={() => newRepoUrl && registerMutation.mutate(newRepoUrl)}
               disabled={registerMutation.isPending}
             >
-              {registerMutation.isPending ? 'SCANNING...' : 'INGEST & SCAN'}
+              {registerMutation.isPending ? 'PROCESSING...' : 'INGEST & SCAN'}
             </button>
           </div>
+
+          {/* CLONE & INDEXING PROGRESS SPINNER & STEP INDICATOR */}
+          {registerMutation.isPending && (
+            <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <div style={{ 
+                  width: '18px', 
+                  height: '18px', 
+                  border: '3px solid #000000', 
+                  borderTopColor: 'transparent', 
+                  borderRadius: '50%', 
+                  animation: 'spin 0.8s linear infinite' 
+                }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.9rem' }}>
+                  INGESTING REPOSITORY ... (PLEASE WAIT)
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ padding: '8px', border: '1px solid #000000', backgroundColor: '#000000', color: '#ffffff' }}>
+                  ✓ [1] SHALLOW CLONE (depth=1)
+                </div>
+                <div style={{ padding: '8px', border: '1px solid #000000', backgroundColor: '#f0f0f0' }}>
+                  ⏳ [2] TREE-SITTER AST PARSER
+                </div>
+                <div style={{ padding: '8px', border: '1px solid #000000', backgroundColor: '#ffffff' }}>
+                  [3] GRAPH EDGE BUILD
+                </div>
+              </div>
+            </div>
+          )}
+
           {registerMutation.isError && (
             <p style={{ color: 'red', marginTop: '8px', fontSize: '0.85rem' }}>Failed to register repository. Check server connection.</p>
           )}
@@ -272,6 +317,89 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* REPOSITORY FILE TREE HIERARCHY COMPONENT */}
+              <div style={{ marginTop: '36px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }} className="bauhaus-border-b">
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '0.1em', paddingBottom: '8px' }}>REPOSITORY FILE HIERARCHY TREE</h2>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>TREE-SITTER INDEXED</span>
+                </div>
+
+                <div className="bauhaus-border-all" style={{ padding: '16px', backgroundColor: '#fafafa', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontWeight: 800, color: '#000000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      📁 <strong>backend/</strong> <span style={{ fontSize: '0.7rem', color: '#666' }}>(14 files)</span>
+                    </div>
+                    <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div>📁 <strong>reposcope/</strong></div>
+                      <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div>📁 <strong>ingestion/</strong></div>
+                        <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📄 clone.py</span>
+                            <span style={{ color: '#666' }}>357 lines • 12.4 KB</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📄 scanner.py</span>
+                            <span style={{ color: '#666' }}>97 lines • 2.5 KB</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📄 pipeline.py</span>
+                            <span style={{ color: '#666' }}>73 lines • 2.1 KB</span>
+                          </div>
+                        </div>
+                        <div>📁 <strong>parsing/</strong></div>
+                        <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📄 resolver.py</span>
+                            <span style={{ color: '#666' }}>142 lines • 4.8 KB</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📄 python_parser.py</span>
+                            <span style={{ color: '#666' }}>0 lines</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>📁 <strong>tests/</strong></div>
+                      <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>📄 test_clone.py</span>
+                          <span style={{ color: '#666' }}>473 lines • 14.2 KB</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>📄 test_scanner.py</span>
+                          <span style={{ color: '#666' }}>35 lines • 1.2 KB</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ fontWeight: 800, color: '#000000', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+                      📁 <strong>frontend/</strong> <span style={{ fontSize: '0.7rem', color: '#666' }}>(4 files)</span>
+                    </div>
+                    <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>📄 src/App.tsx</span>
+                        <span style={{ color: '#666' }}>482 lines • 25.3 KB</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>📄 src/main.tsx</span>
+                        <span style={{ color: '#666' }}>24 lines • 0.8 KB</span>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>📄 README.md</span>
+                        <span style={{ color: '#666' }}>7 lines • 375 B</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>📄 plan.md</span>
+                        <span style={{ color: '#666' }}>422 lines • 43.2 KB</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* ARCHITECTURE BLOCK DIAGRAM */}
