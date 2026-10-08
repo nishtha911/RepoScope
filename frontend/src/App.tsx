@@ -1,21 +1,73 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 type Tab = 'OVERVIEW' | 'GRAPH' | 'PR_IMPACT' | 'RAG' | 'RECOMMENDATIONS';
 
+const API_BASE = 'http://localhost:8000/api';
+
+async function fetchHealth() {
+  const res = await fetch(`${API_BASE}/health`);
+  if (!res.ok) throw new Error('Health check failed');
+  return res.json();
+}
+
+async function fetchRepos() {
+  const res = await fetch(`${API_BASE}/repos`);
+  if (!res.ok) throw new Error('Failed to fetch repos');
+  return res.json();
+}
+
+async function registerRepo(url: string) {
+  const res = await fetch(`${API_BASE}/repos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) throw new Error('Failed to register repo');
+  return res.json();
+}
+
 export default function App() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
   const [selectedRepo, setSelectedRepo] = useState('nishtha911/RepoScope');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
 
-  // Sample data for Bauhaus Dashboard
-  const repos = [
+  // Live queries via React Query
+  const { data: healthData, isError: isHealthError } = useQuery({
+    queryKey: ['health'],
+    queryFn: fetchHealth,
+    refetchInterval: 10000,
+  });
+
+  const { data: reposData } = useQuery({
+    queryKey: ['repos'],
+    queryFn: fetchRepos,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: registerRepo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repos'] });
+      setIsRegistering(false);
+      setNewRepoUrl('');
+    },
+  });
+
+  // Default fallback repos if backend is offline
+  const defaultRepos = [
     'nishtha911/RepoScope',
     'fastapi/fastapi',
     'pallets/flask',
     'psf/requests'
   ];
+
+  const reposList: string[] = reposData?.items
+    ? reposData.items.map((r: { name: string }) => r.name)
+    : defaultRepos;
+
 
   const recentSymbols = [
     { name: 'SymbolResolver.resolve_calls()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/parsing/resolver.py', line: 142 },
@@ -43,7 +95,9 @@ export default function App() {
 
         <div className="bauhaus-border-r" style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>SYSTEM STATUS</span>
-          <span style={{ fontSize: '0.95rem', fontWeight: 700, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>[ READY // ONLINE ]</span>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, fontFamily: 'var(--font-mono)', marginTop: '2px', color: isHealthError ? '#e53e3e' : '#000000' }}>
+            {isHealthError ? '[ SERVER OFFLINE ]' : healthData?.status ? `[ READY // v${healthData.v || '1.0'} ]` : '[ CONNECTING... ]'}
+          </span>
         </div>
 
         <div className="bauhaus-border-r" style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1 }}>
@@ -62,7 +116,7 @@ export default function App() {
               marginTop: '2px'
             }}
           >
-            {repos.map(r => (
+            {reposList.map((r: string) => (
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
@@ -89,10 +143,17 @@ export default function App() {
               value={newRepoUrl}
               onChange={(e) => setNewRepoUrl(e.target.value)}
             />
-            <button className="bauhaus-btn-invert" onClick={() => setIsRegistering(false)}>
-              INGEST & SCAN
+            <button 
+              className="bauhaus-btn-invert" 
+              onClick={() => newRepoUrl && registerMutation.mutate(newRepoUrl)}
+              disabled={registerMutation.isPending}
+            >
+              {registerMutation.isPending ? 'SCANNING...' : 'INGEST & SCAN'}
             </button>
           </div>
+          {registerMutation.isError && (
+            <p style={{ color: 'red', marginTop: '8px', fontSize: '0.85rem' }}>Failed to register repository. Check server connection.</p>
+          )}
         </div>
       )}
 
