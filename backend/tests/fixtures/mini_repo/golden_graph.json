@@ -1,84 +1,1116 @@
 {
+  "schema_version": 1,
   "repository": "tests/fixtures/mini_repo",
-  "files_count": 5,
-  "symbols_count": 8,
-  "symbols": [
+  "scope": {
+    "symbols": "All local ClassDef, FunctionDef and AsyncFunctionDef definitions, including nested functions and test helpers. Modules, variables, parameters and imported definitions are excluded.",
+    "line_ranges": "Inclusive, 1-based definition lines from the class/def statement, excluding preceding decorators.",
+    "edges": "Selected source-reviewed expectations: internal production/helper calls, two local inheritance relationships, and direct test-to-target associations. Not an exhaustive call graph or proof of test coverage.",
+    "excluded_edges": [
+      "IMPORTS",
+      "DECORATED_BY",
+      "external/builtin calls",
+      "dynamic wrapper calls",
+      "most calls inside test bodies"
+    ],
+    "test_edge_direction": "implementation symbol -> TESTED_BY -> test function",
+    "constructor_convention": "An explicit class construction targets the class node; no additional implied __init__ CALLS edge.",
+    "confidence": "Null means no calibrated resolver confidence has been assigned.",
+    "approval": "Reference draft for team review; TESTED_BY naming/direction requires shared agreement."
+  },
+  "files_count": 15,
+  "symbols_count": 44,
+  "edges_count": 45,
+  "files": [
     {
       "id": 1,
-      "file_id": 1,
-      "name": "User",
-      "kind": "CLASS",
-      "file_path": "models.py",
-      "start_line": 1,
-      "end_line": 5
+      "path": "__init__.py"
     },
     {
       "id": 2,
-      "file_id": 1,
-      "name": "get_user_by_id",
-      "kind": "FUNCTION",
-      "file_path": "models.py",
-      "start_line": 7,
-      "end_line": 12
+      "path": "app.py"
     },
     {
       "id": 3,
-      "file_id": 2,
-      "name": "UserService",
-      "kind": "CLASS",
-      "file_path": "services.py",
-      "start_line": 1,
-      "end_line": 15
+      "path": "config.py"
     },
     {
       "id": 4,
+      "path": "decorators.py"
+    },
+    {
+      "id": 5,
+      "path": "exceptions.py"
+    },
+    {
+      "id": 6,
+      "path": "models.py"
+    },
+    {
+      "id": 7,
+      "path": "repository.py"
+    },
+    {
+      "id": 8,
+      "path": "service.py"
+    },
+    {
+      "id": 9,
+      "path": "test_app.py"
+    },
+    {
+      "id": 10,
+      "path": "test_models.py"
+    },
+    {
+      "id": 11,
+      "path": "test_service.py"
+    },
+    {
+      "id": 12,
+      "path": "test_utils.py"
+    },
+    {
+      "id": 13,
+      "path": "test_validators.py"
+    },
+    {
+      "id": 14,
+      "path": "utils.py"
+    },
+    {
+      "id": 15,
+      "path": "validators.py"
+    }
+  ],
+  "symbols": [
+    {
+      "id": 1,
       "file_id": 2,
-      "name": "fetch_profile",
-      "kind": "METHOD",
-      "file_path": "services.py",
-      "start_line": 5,
+      "name": "build_service",
+      "kind": "function",
+      "start_line": 6,
+      "end_line": 8
+    },
+    {
+      "id": 2,
+      "file_id": 2,
+      "name": "run_demo",
+      "kind": "function",
+      "start_line": 11,
+      "end_line": 20
+    },
+    {
+      "id": 3,
+      "file_id": 4,
+      "name": "log_call",
+      "kind": "function",
+      "start_line": 4,
+      "end_line": 12
+    },
+    {
+      "id": 4,
+      "file_id": 4,
+      "name": "wrapper",
+      "kind": "function",
+      "start_line": 8,
       "end_line": 10
     },
     {
       "id": 5,
-      "file_id": 3,
-      "name": "read_user_endpoint",
-      "kind": "FUNCTION",
-      "file_path": "api.py",
-      "start_line": 4,
-      "end_line": 9
+      "file_id": 5,
+      "name": "MiniRepoError",
+      "kind": "class",
+      "start_line": 1,
+      "end_line": 2
     },
     {
       "id": 6,
-      "file_id": 4,
-      "name": "test_fetch_profile",
-      "kind": "FUNCTION",
-      "file_path": "test_services.py",
-      "start_line": 3,
+      "file_id": 5,
+      "name": "ValidationError",
+      "kind": "class",
+      "start_line": 5,
+      "end_line": 6
+    },
+    {
+      "id": 7,
+      "file_id": 5,
+      "name": "UserNotFoundError",
+      "kind": "class",
+      "start_line": 9,
+      "end_line": 10
+    },
+    {
+      "id": 8,
+      "file_id": 6,
+      "name": "User",
+      "kind": "class",
+      "start_line": 4,
+      "end_line": 14
+    },
+    {
+      "id": 9,
+      "file_id": 6,
+      "name": "deactivate",
+      "kind": "method",
+      "start_line": 10,
+      "end_line": 11
+    },
+    {
+      "id": 10,
+      "file_id": 6,
+      "name": "display_name",
+      "kind": "method",
+      "start_line": 13,
+      "end_line": 14
+    },
+    {
+      "id": 11,
+      "file_id": 7,
+      "name": "UserRepository",
+      "kind": "class",
+      "start_line": 5,
+      "end_line": 24
+    },
+    {
+      "id": 12,
+      "file_id": 7,
+      "name": "__init__",
+      "kind": "method",
+      "start_line": 8,
+      "end_line": 9
+    },
+    {
+      "id": 13,
+      "file_id": 7,
+      "name": "add",
+      "kind": "method",
+      "start_line": 11,
+      "end_line": 15
+    },
+    {
+      "id": 14,
+      "file_id": 7,
+      "name": "get_by_id",
+      "kind": "method",
+      "start_line": 17,
+      "end_line": 21
+    },
+    {
+      "id": 15,
+      "file_id": 7,
+      "name": "get_all",
+      "kind": "method",
+      "start_line": 23,
+      "end_line": 24
+    },
+    {
+      "id": 16,
+      "file_id": 8,
+      "name": "UserService",
+      "kind": "class",
+      "start_line": 8,
+      "end_line": 39
+    },
+    {
+      "id": 17,
+      "file_id": 8,
+      "name": "__init__",
+      "kind": "method",
+      "start_line": 11,
+      "end_line": 12
+    },
+    {
+      "id": 18,
+      "file_id": 8,
+      "name": "create_user",
+      "kind": "method",
+      "start_line": 15,
+      "end_line": 31
+    },
+    {
+      "id": 19,
+      "file_id": 8,
+      "name": "get_user",
+      "kind": "method",
+      "start_line": 33,
+      "end_line": 34
+    },
+    {
+      "id": 20,
+      "file_id": 8,
+      "name": "deactivate_user",
+      "kind": "method",
+      "start_line": 36,
+      "end_line": 39
+    },
+    {
+      "id": 21,
+      "file_id": 9,
+      "name": "test_build_service",
+      "kind": "function",
+      "start_line": 6,
+      "end_line": 10
+    },
+    {
+      "id": 22,
+      "file_id": 9,
+      "name": "test_run_demo",
+      "kind": "function",
+      "start_line": 13,
+      "end_line": 21
+    },
+    {
+      "id": 23,
+      "file_id": 10,
+      "name": "test_user_starts_active",
+      "kind": "function",
+      "start_line": 4,
+      "end_line": 7
+    },
+    {
+      "id": 24,
+      "file_id": 10,
+      "name": "test_deactivate_user",
+      "kind": "function",
+      "start_line": 10,
+      "end_line": 15
+    },
+    {
+      "id": 25,
+      "file_id": 10,
+      "name": "test_display_name_strips_whitespace",
+      "kind": "function",
+      "start_line": 18,
+      "end_line": 21
+    },
+    {
+      "id": 26,
+      "file_id": 11,
+      "name": "service",
+      "kind": "function",
+      "start_line": 10,
+      "end_line": 11
+    },
+    {
+      "id": 27,
+      "file_id": 11,
+      "name": "test_create_user",
+      "kind": "function",
+      "start_line": 14,
+      "end_line": 20
+    },
+    {
+      "id": 28,
+      "file_id": 11,
+      "name": "test_user_ids_increment",
+      "kind": "function",
+      "start_line": 23,
+      "end_line": 28
+    },
+    {
+      "id": 29,
+      "file_id": 11,
+      "name": "test_deactivate_user",
+      "kind": "function",
+      "start_line": 31,
+      "end_line": 37
+    },
+    {
+      "id": 30,
+      "file_id": 11,
+      "name": "test_missing_user",
+      "kind": "function",
+      "start_line": 40,
+      "end_line": 42
+    },
+    {
+      "id": 31,
+      "file_id": 11,
+      "name": "test_invalid_input_is_not_stored",
+      "kind": "function",
+      "start_line": 45,
+      "end_line": 49
+    },
+    {
+      "id": 32,
+      "file_id": 11,
+      "name": "test_duplicate_id_is_rejected",
+      "kind": "function",
+      "start_line": 52,
+      "end_line": 58
+    },
+    {
+      "id": 33,
+      "file_id": 11,
+      "name": "test_create_user_logs_call",
+      "kind": "function",
+      "start_line": 61,
+      "end_line": 64
+    },
+    {
+      "id": 34,
+      "file_id": 12,
+      "name": "test_normalize_username",
+      "kind": "function",
+      "start_line": 4,
+      "end_line": 5
+    },
+    {
+      "id": 35,
+      "file_id": 12,
+      "name": "test_normalize_email",
+      "kind": "function",
+      "start_line": 8,
+      "end_line": 9
+    },
+    {
+      "id": 36,
+      "file_id": 12,
+      "name": "test_normalize_empty_username",
+      "kind": "function",
+      "start_line": 12,
+      "end_line": 13
+    },
+    {
+      "id": 37,
+      "file_id": 13,
+      "name": "test_valid_username",
+      "kind": "function",
+      "start_line": 8,
+      "end_line": 9
+    },
+    {
+      "id": 38,
+      "file_id": 13,
+      "name": "test_invalid_username",
+      "kind": "function",
+      "start_line": 13,
+      "end_line": 15
+    },
+    {
+      "id": 39,
+      "file_id": 13,
+      "name": "test_valid_email",
+      "kind": "function",
+      "start_line": 22,
+      "end_line": 23
+    },
+    {
+      "id": 40,
+      "file_id": 13,
+      "name": "test_invalid_email",
+      "kind": "function",
+      "start_line": 30,
+      "end_line": 32
+    },
+    {
+      "id": 41,
+      "file_id": 14,
+      "name": "normalize_username",
+      "kind": "function",
+      "start_line": 1,
+      "end_line": 3
+    },
+    {
+      "id": 42,
+      "file_id": 14,
+      "name": "normalize_email",
+      "kind": "function",
+      "start_line": 6,
       "end_line": 8
+    },
+    {
+      "id": 43,
+      "file_id": 15,
+      "name": "validate_username",
+      "kind": "function",
+      "start_line": 6,
+      "end_line": 14
+    },
+    {
+      "id": 44,
+      "file_id": 15,
+      "name": "validate_email",
+      "kind": "function",
+      "start_line": 17,
+      "end_line": 29
+    }
+  ],
+  "symbol_metadata": [
+    {
+      "symbol_id": 1,
+      "qualified_name": "build_service"
+    },
+    {
+      "symbol_id": 2,
+      "qualified_name": "run_demo"
+    },
+    {
+      "symbol_id": 3,
+      "qualified_name": "log_call"
+    },
+    {
+      "symbol_id": 4,
+      "qualified_name": "log_call.wrapper"
+    },
+    {
+      "symbol_id": 5,
+      "qualified_name": "MiniRepoError"
+    },
+    {
+      "symbol_id": 6,
+      "qualified_name": "ValidationError"
+    },
+    {
+      "symbol_id": 7,
+      "qualified_name": "UserNotFoundError"
+    },
+    {
+      "symbol_id": 8,
+      "qualified_name": "User"
+    },
+    {
+      "symbol_id": 9,
+      "qualified_name": "User.deactivate"
+    },
+    {
+      "symbol_id": 10,
+      "qualified_name": "User.display_name"
+    },
+    {
+      "symbol_id": 11,
+      "qualified_name": "UserRepository"
+    },
+    {
+      "symbol_id": 12,
+      "qualified_name": "UserRepository.__init__"
+    },
+    {
+      "symbol_id": 13,
+      "qualified_name": "UserRepository.add"
+    },
+    {
+      "symbol_id": 14,
+      "qualified_name": "UserRepository.get_by_id"
+    },
+    {
+      "symbol_id": 15,
+      "qualified_name": "UserRepository.get_all"
+    },
+    {
+      "symbol_id": 16,
+      "qualified_name": "UserService"
+    },
+    {
+      "symbol_id": 17,
+      "qualified_name": "UserService.__init__"
+    },
+    {
+      "symbol_id": 18,
+      "qualified_name": "UserService.create_user"
+    },
+    {
+      "symbol_id": 19,
+      "qualified_name": "UserService.get_user"
+    },
+    {
+      "symbol_id": 20,
+      "qualified_name": "UserService.deactivate_user"
+    },
+    {
+      "symbol_id": 21,
+      "qualified_name": "test_build_service"
+    },
+    {
+      "symbol_id": 22,
+      "qualified_name": "test_run_demo"
+    },
+    {
+      "symbol_id": 23,
+      "qualified_name": "test_user_starts_active"
+    },
+    {
+      "symbol_id": 24,
+      "qualified_name": "test_deactivate_user"
+    },
+    {
+      "symbol_id": 25,
+      "qualified_name": "test_display_name_strips_whitespace"
+    },
+    {
+      "symbol_id": 26,
+      "qualified_name": "service"
+    },
+    {
+      "symbol_id": 27,
+      "qualified_name": "test_create_user"
+    },
+    {
+      "symbol_id": 28,
+      "qualified_name": "test_user_ids_increment"
+    },
+    {
+      "symbol_id": 29,
+      "qualified_name": "test_deactivate_user"
+    },
+    {
+      "symbol_id": 30,
+      "qualified_name": "test_missing_user"
+    },
+    {
+      "symbol_id": 31,
+      "qualified_name": "test_invalid_input_is_not_stored"
+    },
+    {
+      "symbol_id": 32,
+      "qualified_name": "test_duplicate_id_is_rejected"
+    },
+    {
+      "symbol_id": 33,
+      "qualified_name": "test_create_user_logs_call"
+    },
+    {
+      "symbol_id": 34,
+      "qualified_name": "test_normalize_username"
+    },
+    {
+      "symbol_id": 35,
+      "qualified_name": "test_normalize_email"
+    },
+    {
+      "symbol_id": 36,
+      "qualified_name": "test_normalize_empty_username"
+    },
+    {
+      "symbol_id": 37,
+      "qualified_name": "test_valid_username"
+    },
+    {
+      "symbol_id": 38,
+      "qualified_name": "test_invalid_username"
+    },
+    {
+      "symbol_id": 39,
+      "qualified_name": "test_valid_email"
+    },
+    {
+      "symbol_id": 40,
+      "qualified_name": "test_invalid_email"
+    },
+    {
+      "symbol_id": 41,
+      "qualified_name": "normalize_username"
+    },
+    {
+      "symbol_id": 42,
+      "qualified_name": "normalize_email"
+    },
+    {
+      "symbol_id": 43,
+      "qualified_name": "validate_username"
+    },
+    {
+      "symbol_id": 44,
+      "qualified_name": "validate_email"
     }
   ],
   "edges": [
     {
       "id": 1,
-      "source_symbol_id": 4,
-      "target_symbol_id": 2,
+      "source_symbol_id": 1,
+      "target_symbol_id": 11,
       "kind": "CALLS",
-      "confidence": 1.0
+      "confidence": null
     },
     {
       "id": 2,
-      "source_symbol_id": 5,
-      "target_symbol_id": 4,
+      "source_symbol_id": 1,
+      "target_symbol_id": 16,
       "kind": "CALLS",
-      "confidence": 1.0
+      "confidence": null
     },
     {
       "id": 3,
+      "source_symbol_id": 2,
+      "target_symbol_id": 1,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 4,
+      "source_symbol_id": 2,
+      "target_symbol_id": 18,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 5,
+      "source_symbol_id": 2,
+      "target_symbol_id": 10,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 6,
+      "source_symbol_id": 13,
+      "target_symbol_id": 6,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 7,
+      "source_symbol_id": 14,
+      "target_symbol_id": 7,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 8,
+      "source_symbol_id": 18,
+      "target_symbol_id": 43,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 9,
+      "source_symbol_id": 18,
+      "target_symbol_id": 44,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 10,
+      "source_symbol_id": 18,
+      "target_symbol_id": 15,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 11,
+      "source_symbol_id": 18,
+      "target_symbol_id": 8,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 12,
+      "source_symbol_id": 18,
+      "target_symbol_id": 41,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 13,
+      "source_symbol_id": 18,
+      "target_symbol_id": 42,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 14,
+      "source_symbol_id": 18,
+      "target_symbol_id": 13,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 15,
+      "source_symbol_id": 19,
+      "target_symbol_id": 14,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 16,
+      "source_symbol_id": 20,
+      "target_symbol_id": 19,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 17,
+      "source_symbol_id": 20,
+      "target_symbol_id": 9,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 18,
+      "source_symbol_id": 26,
+      "target_symbol_id": 16,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 19,
+      "source_symbol_id": 26,
+      "target_symbol_id": 11,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 20,
+      "source_symbol_id": 43,
+      "target_symbol_id": 41,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 21,
+      "source_symbol_id": 43,
+      "target_symbol_id": 6,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 22,
+      "source_symbol_id": 44,
+      "target_symbol_id": 42,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 23,
+      "source_symbol_id": 44,
+      "target_symbol_id": 6,
+      "kind": "CALLS",
+      "confidence": null
+    },
+    {
+      "id": 24,
       "source_symbol_id": 6,
-      "target_symbol_id": 4,
-      "kind": "TESTS",
-      "confidence": 1.0
+      "target_symbol_id": 5,
+      "kind": "INHERITS",
+      "confidence": null
+    },
+    {
+      "id": 25,
+      "source_symbol_id": 7,
+      "target_symbol_id": 5,
+      "kind": "INHERITS",
+      "confidence": null
+    },
+    {
+      "id": 26,
+      "source_symbol_id": 1,
+      "target_symbol_id": 21,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 27,
+      "source_symbol_id": 2,
+      "target_symbol_id": 22,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 28,
+      "source_symbol_id": 8,
+      "target_symbol_id": 23,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 29,
+      "source_symbol_id": 9,
+      "target_symbol_id": 24,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 30,
+      "source_symbol_id": 10,
+      "target_symbol_id": 25,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 31,
+      "source_symbol_id": 18,
+      "target_symbol_id": 27,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 32,
+      "source_symbol_id": 19,
+      "target_symbol_id": 27,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 33,
+      "source_symbol_id": 18,
+      "target_symbol_id": 28,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 34,
+      "source_symbol_id": 20,
+      "target_symbol_id": 29,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 35,
+      "source_symbol_id": 19,
+      "target_symbol_id": 30,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 36,
+      "source_symbol_id": 18,
+      "target_symbol_id": 31,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 37,
+      "source_symbol_id": 13,
+      "target_symbol_id": 32,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 38,
+      "source_symbol_id": 18,
+      "target_symbol_id": 33,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 39,
+      "source_symbol_id": 41,
+      "target_symbol_id": 34,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 40,
+      "source_symbol_id": 42,
+      "target_symbol_id": 35,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 41,
+      "source_symbol_id": 41,
+      "target_symbol_id": 36,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 42,
+      "source_symbol_id": 43,
+      "target_symbol_id": 37,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 43,
+      "source_symbol_id": 43,
+      "target_symbol_id": 38,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 44,
+      "source_symbol_id": 44,
+      "target_symbol_id": 39,
+      "kind": "TESTED_BY",
+      "confidence": null
+    },
+    {
+      "id": 45,
+      "source_symbol_id": 44,
+      "target_symbol_id": 40,
+      "kind": "TESTED_BY",
+      "confidence": null
+    }
+  ],
+  "edge_metadata": [
+    {
+      "edge_id": 1,
+      "source_expression": "UserRepository"
+    },
+    {
+      "edge_id": 2,
+      "source_expression": "UserService"
+    },
+    {
+      "edge_id": 3,
+      "source_expression": "build_service"
+    },
+    {
+      "edge_id": 4,
+      "source_expression": "service.create_user"
+    },
+    {
+      "edge_id": 5,
+      "source_expression": "user.display_name"
+    },
+    {
+      "edge_id": 6,
+      "source_expression": "ValidationError"
+    },
+    {
+      "edge_id": 7,
+      "source_expression": "UserNotFoundError"
+    },
+    {
+      "edge_id": 8,
+      "source_expression": "validate_username"
+    },
+    {
+      "edge_id": 9,
+      "source_expression": "validate_email"
+    },
+    {
+      "edge_id": 10,
+      "source_expression": "self.repository.get_all"
+    },
+    {
+      "edge_id": 11,
+      "source_expression": "User"
+    },
+    {
+      "edge_id": 12,
+      "source_expression": "normalize_username"
+    },
+    {
+      "edge_id": 13,
+      "source_expression": "normalize_email"
+    },
+    {
+      "edge_id": 14,
+      "source_expression": "self.repository.add"
+    },
+    {
+      "edge_id": 15,
+      "source_expression": "self.repository.get_by_id"
+    },
+    {
+      "edge_id": 16,
+      "source_expression": "self.get_user"
+    },
+    {
+      "edge_id": 17,
+      "source_expression": "user.deactivate"
+    },
+    {
+      "edge_id": 18,
+      "source_expression": "UserService"
+    },
+    {
+      "edge_id": 19,
+      "source_expression": "UserRepository"
+    },
+    {
+      "edge_id": 20,
+      "source_expression": "normalize_username"
+    },
+    {
+      "edge_id": 21,
+      "source_expression": "ValidationError"
+    },
+    {
+      "edge_id": 22,
+      "source_expression": "normalize_email"
+    },
+    {
+      "edge_id": 23,
+      "source_expression": "ValidationError"
+    },
+    {
+      "edge_id": 24,
+      "source_expression": "MiniRepoError"
+    },
+    {
+      "edge_id": 25,
+      "source_expression": "MiniRepoError"
+    },
+    {
+      "edge_id": 26,
+      "source_expression": "build_service"
+    },
+    {
+      "edge_id": 27,
+      "source_expression": "run_demo"
+    },
+    {
+      "edge_id": 28,
+      "source_expression": "User"
+    },
+    {
+      "edge_id": 29,
+      "source_expression": "user.deactivate"
+    },
+    {
+      "edge_id": 30,
+      "source_expression": "user.display_name"
+    },
+    {
+      "edge_id": 31,
+      "source_expression": "service.create_user"
+    },
+    {
+      "edge_id": 32,
+      "source_expression": "service.get_user"
+    },
+    {
+      "edge_id": 33,
+      "source_expression": "service.create_user"
+    },
+    {
+      "edge_id": 34,
+      "source_expression": "service.deactivate_user"
+    },
+    {
+      "edge_id": 35,
+      "source_expression": "service.get_user"
+    },
+    {
+      "edge_id": 36,
+      "source_expression": "service.create_user"
+    },
+    {
+      "edge_id": 37,
+      "source_expression": "repository.add"
+    },
+    {
+      "edge_id": 38,
+      "source_expression": "service.create_user"
+    },
+    {
+      "edge_id": 39,
+      "source_expression": "normalize_username"
+    },
+    {
+      "edge_id": 40,
+      "source_expression": "normalize_email"
+    },
+    {
+      "edge_id": 41,
+      "source_expression": "normalize_username"
+    },
+    {
+      "edge_id": 42,
+      "source_expression": "validate_username"
+    },
+    {
+      "edge_id": 43,
+      "source_expression": "validate_username"
+    },
+    {
+      "edge_id": 44,
+      "source_expression": "validate_email"
+    },
+    {
+      "edge_id": 45,
+      "source_expression": "validate_email"
     }
   ]
 }
