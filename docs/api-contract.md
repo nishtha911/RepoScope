@@ -57,7 +57,7 @@ Standard error codes:
   {
     "repo_id": 1,
     "status": "pending",
-    "message": "Repository ingestion enqueued"
+    "message": "Mock registration accepted; no ingestion job was enqueued"
   }
   ```
 
@@ -70,7 +70,7 @@ Standard error codes:
     "name": "owner/repo",
     "default_branch": "main",
     "status": "ready",
-    "head_sha": "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60",
+    "head_sha": "d631c3f98581ab3ebdb0c8daa28cc8bf122f749a",
     "snapshot_id": 1,
     "symbol_count": 3412,
     "file_count": 142
@@ -134,7 +134,8 @@ Standard error codes:
 `GET /api/symbols/{id}/impact?depth={int}`
 
 Planned endpoint: not implemented by the current mock router or this contracts patch.
-- **Response 200 OK:**
+
+Proposed future response shape (not an implemented 200 response):
   ```json
   {
     "root_symbol_id": 101,
@@ -259,3 +260,18 @@ Planned endpoint: not implemented by the current mock router or this contracts p
     "action": "accepted"
   }
   ```
+
+## Mock dataset provenance
+
+The repository example names nishtha911/RepoScope and pins the verified historical commit
+`d631c3f98581ab3ebdb0c8daa28cc8bf122f749a` from that repository. This is not a live HEAD lookup.
+The counts, snapshot/file/symbol/chunk IDs, symbol paths, source snippets, graph relationships,
+recommendations and PR risk values are synthetic mock examples, not extracted facts about
+that commit. Do not treat the 142/3412 counters as measured repository statistics.
+Registration returns an acknowledgment only: no actual ingestion job is queued.
+Search/Q&A/PR-impact/recommendation responses do not execute retrieval, an LLM, diff analysis,
+or persistence. This contract mock is for interface development, not real code intelligence.
+The symbol-impact endpoint remains planned; its shown future shape is not currently returned.
+A request to it currently receives the ordinary 404 NOT_FOUND envelope, not fabricated analysis.
+NOT_IMPLEMENTED is mapped for future explicit HTTP 501 stubs; adding the mapping does not
+create an impact route or change the planned endpoint from 404 to 501.

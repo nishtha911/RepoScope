@@ -17,7 +17,8 @@ from typing import get_args
 
 router = APIRouter(tags=["mock"])
 PathID = Annotated[int, Path(gt=0)]
-MOCK_SHA = "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60"
+# Verified historical RepoScope commit; other fixture values are synthetic.
+MOCK_SHA = "d631c3f98581ab3ebdb0c8daa28cc8bf122f749a"
 
 
 def mock_symbol() -> SymbolListItem:
@@ -30,7 +31,7 @@ def mock_symbol() -> SymbolListItem:
 
 @router.post("/repos", status_code=status.HTTP_202_ACCEPTED, response_model=RegisterRepoResponse)
 def register_repo(payload: RegisterRepoRequest) -> RegisterRepoResponse:
-    return RegisterRepoResponse(repo_id=1, status="pending", message="Repository ingestion enqueued")
+    return RegisterRepoResponse(repo_id=1, status="pending", message="Mock registration accepted; no ingestion job was enqueued")
 
 
 @router.get("/repos/{repo_id}", response_model=RepositoryResponse)
