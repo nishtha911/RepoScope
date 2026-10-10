@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import SymbolSearch from './components/SymbolSearch';
 
 type Tab = 'OVERVIEW' | 'GRAPH' | 'PR_IMPACT' | 'RAG' | 'RECOMMENDATIONS';
 
@@ -11,11 +12,6 @@ async function fetchHealth() {
   return res.json();
 }
 
-async function fetchRepos() {
-  const res = await fetch(`${API_BASE}/repos`);
-  if (!res.ok) throw new Error('Failed to fetch repos');
-  return res.json();
-}
 
 async function registerRepo(url: string) {
   const res = await fetch(`${API_BASE}/repos`, {
@@ -28,9 +24,9 @@ async function registerRepo(url: string) {
 }
 
 export default function App() {
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
-  const [selectedRepo, setSelectedRepo] = useState('nishtha911/RepoScope');
+  const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');  const [selectedRepoId, setSelectedRepoId] = useState(1);
+  const mockRepos = [{ id: 1, name: 'nishtha911/RepoScope' }];
+  const selectedRepo = mockRepos.find(repo => repo.id === selectedRepoId)!;
   const [searchQuery, setSearchQuery] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
@@ -42,40 +38,15 @@ export default function App() {
     refetchInterval: 10000,
   });
 
-  const { data: reposData } = useQuery({
-    queryKey: ['repos'],
-    queryFn: fetchRepos,
-  });
 
   const registerMutation = useMutation({
     mutationFn: registerRepo,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['repos'] });
+
       setIsRegistering(false);
       setNewRepoUrl('');
     },
   });
-
-  // Default fallback repos if backend is offline
-  const defaultRepos = [
-    'nishtha911/RepoScope',
-    'fastapi/fastapi',
-    'pallets/flask',
-    'psf/requests'
-  ];
-
-  const reposList: string[] = reposData?.items
-    ? reposData.items.map((r: { name: string }) => r.name)
-    : defaultRepos;
-
-
-  const recentSymbols = [
-    { name: 'SymbolResolver.resolve_calls()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/parsing/resolver.py', line: 142 },
-    { name: 'GraphRAGPipeline.build_evidence_pack()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/rag/pipeline.py', line: 88 },
-    { name: 'GitScanner.scan_repository()', type: 'FUNCTION', confidence: 'EXACT', file: 'backend/reposcope/ingestion/scanner.py', line: 53 },
-    { name: 'SymbolChunker.chunk_symbols()', type: 'FUNCTION', confidence: 'INFERRED', file: 'backend/reposcope/retrieval/chunker.py', line: 29 },
-    { name: 'PRImpactAnalyzer.calculate_blast_radius()', type: 'METHOD', confidence: 'EXACT', file: 'backend/reposcope/recommendations/scorer.py', line: 110 }
-  ];
 
   const recentPRImpacts = [
     { pr: '#42 Refactor resolver.py AST pass', risk: 'LOW (0.04)', blastCount: 14, filesChanged: 3 },
@@ -103,8 +74,8 @@ export default function App() {
         <div className="bauhaus-border-r" style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1 }}>
           <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>TARGET REPOSITORY</span>
           <select 
-            value={selectedRepo}
-            onChange={(e) => setSelectedRepo(e.target.value)}
+            value={selectedRepoId}
+            onChange={(e) => { setSelectedRepoId(Number(e.target.value)); setSearchQuery(''); }}
             style={{
               border: 'none',
               background: 'transparent',
@@ -116,8 +87,8 @@ export default function App() {
               marginTop: '2px'
             }}
           >
-            {reposList.map((r: string) => (
-              <option key={r} value={r}>{r}</option>
+            {mockRepos.map(repo => (
+              <option key={repo.id} value={repo.id}>{repo.name} (mock)</option>
             ))}
           </select>
         </div>
@@ -202,21 +173,8 @@ export default function App() {
         </div>
       )}
 
-      {/* SEARCH AND CONTROL BAR */}
-      <div className="bauhaus-border-b" style={{ display: 'flex', flexWrap: 'wrap', backgroundColor: '#ffffff' }}>
-        <div style={{ flex: 1, minWidth: '300px', display: 'flex', alignItems: 'center' }} className="bauhaus-border-r">
-          <span style={{ padding: '0 20px', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>SEARCH:</span>
-          <input 
-            className="bauhaus-input"
-            style={{ border: 'none', height: '100%', padding: '18px 20px' }}
-            placeholder="TYPE SYMBOL, FILE PATH, OR NATURAL LANGUAGE QUERY..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em' }}>AST ENGINE: TREE-SITTER // PYTHON 3.11</span>
-        </div>
+      <div className="bauhaus-border-b" style={{ padding: '12px 24px', fontSize: '0.8rem' }}>
+        MOCK SYMBOL SEARCH — use the search panel in Overview. No live indexing or semantic search is claimed.
       </div>
 
       {/* NAVIGATION TABS */}
@@ -280,44 +238,14 @@ export default function App() {
             
             {/* LEFT COLUMN: REPO STRUCTURE & SYMBOLS */}
             <div className="bauhaus-border-r" style={{ padding: '32px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }} className="bauhaus-border-b">
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '0.1em', paddingBottom: '12px' }}>RECENT INGESTED SYMBOLS</h2>
-                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>5 SHOWN</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }} className="bauhaus-border-all">
-                {recentSymbols.map((s, idx) => (
-                  <div 
-                    key={idx} 
-                    style={{ 
-                      padding: '16px', 
-                      backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                      borderBottom: idx === recentSymbols.length - 1 ? 'none' : '1.5px solid #000000',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.9rem' }}>{s.name}</span>
-                      <span style={{ 
-                        fontSize: '0.65rem', 
-                        fontWeight: 800, 
-                        letterSpacing: '0.1em', 
-                        padding: '2px 8px', 
-                        backgroundColor: '#000000', 
-                        color: '#ffffff' 
-                      }}>
-                        {s.type}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                      <span>{s.file}:{s.line}</span>
-                      <span>CONFIDENCE: {s.confidence}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <SymbolSearch
+                key={selectedRepoId}
+                repoId={selectedRepoId}
+                repoName={selectedRepo.name}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                apiBase={API_BASE}
+              />
 
               {/* REPOSITORY FILE TREE HIERARCHY COMPONENT */}
               <div style={{ marginTop: '36px' }}>
