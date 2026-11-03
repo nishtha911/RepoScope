@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import SymbolSearch from './components/SymbolSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
+import SymbolDetail from './components/SymbolDetail';
 
 type Tab =
   | 'OVERVIEW'
@@ -98,6 +99,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
+  const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
 
   const selectedRepo =
     mockRepos.find((repo) => repo.id === selectedRepoId) ??
@@ -621,6 +623,10 @@ export default function App() {
                     query={searchQuery}
                     onQueryChange={setSearchQuery}
                     apiBase={API_BASE}
+                    onInspectSymbol={(symbol) => {
+                      setInspectedSymbolId(symbol.id);
+                      setActiveTab('GRAPH');
+                    }}
                   />
                 )}
 
@@ -903,45 +909,17 @@ export default function App() {
           </>
         )}
 
-        {/* GRAPH PLACEHOLDER */}
+        {/* SYMBOL DETAIL & NEIGHBORHOOD VIEWER */}
         {activeTab === 'GRAPH' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              CODE GRAPH EXPLORER
-            </h2>
-
-            <div
-              className="bauhaus-border-all"
-              style={{
-                padding: '40px',
-                textAlign: 'center',
-                backgroundColor: '#f9f9f9',
-              }}
-            >
-              <p>
-                Placeholder interface. Interactive graph traversal is not
-                connected in this dashboard.
-              </p>
-
-              <button
-                type="button"
-                className="bauhaus-btn-invert"
-                onClick={() => setActiveTab('OVERVIEW')}
-                style={{ marginTop: '20px' }}
-              >
-                RETURN TO OVERVIEW
-              </button>
-            </div>
-          </section>
+          <SymbolDetail
+            symbolId={inspectedSymbolId}
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            offlinePreview={offlinePreview}
+            apiBase={API_BASE}
+            onSelectSymbol={(id) => setInspectedSymbolId(id)}
+            onBackToOverview={() => setActiveTab('OVERVIEW')}
+          />
         )}
 
         {/* PR IMPACT PLACEHOLDER */}

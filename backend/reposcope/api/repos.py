@@ -100,6 +100,14 @@ def get_recommendations(
 
 @router.get("/symbols/{symbol_id}", response_model=SymbolDetailResponse)
 def get_symbol_detail(symbol_id: PathID) -> SymbolDetailResponse:
+    if symbol_id == 204:
+        return SymbolDetailResponse(
+            id=204, file_id=11, name="scan",
+            qualname="SymbolScanner.scan", kind="method",
+            file_path="backend/reposcope/ingestion/scanner.py", start_line=55, end_line=98,
+            signature="def scan(self, directory: Path) -> ScanResult:",
+            docstring="Scans a repository filesystem tree and collects source files.", cyclomatic_complexity=6,
+        )
     return SymbolDetailResponse(
         **{**mock_symbol().model_dump(), "id": symbol_id},
         signature="def resolve_calls(self, ast_tree) -> list[Edge]:",
@@ -118,10 +126,33 @@ def get_symbol_neighbors(
         raise HTTPException(status_code=422, detail="types must be comma-separated allowed edge kinds")
     neighbors = []
     if not selected or "CALLS" in selected:
-        neighbors.append(Neighbor(
-            symbol_id=204, name="SymbolScanner.scan", relationship_type="CALLS",
-            confidence=1.0, direction=direction,
-        ))
+        if symbol_id == 101:
+            if direction == "in":
+                neighbors.append(Neighbor(
+                    symbol_id=204, name="SymbolScanner.scan", relationship_type="CALLS",
+                    confidence=1.0, direction="in",
+                ))
+            else:
+                neighbors.append(Neighbor(
+                    symbol_id=305, name="ReferenceResolver.resolve", relationship_type="CALLS",
+                    confidence=0.92, direction="out",
+                ))
+        elif symbol_id == 204:
+            if direction == "out":
+                neighbors.append(Neighbor(
+                    symbol_id=101, name="SymbolResolver.resolve_calls", relationship_type="CALLS",
+                    confidence=1.0, direction="out",
+                ))
+            else:
+                neighbors.append(Neighbor(
+                    symbol_id=501, name="main.run_scan", relationship_type="CALLS",
+                    confidence=0.88, direction="in",
+                ))
+        else:
+            neighbors.append(Neighbor(
+                symbol_id=101, name="SymbolResolver.resolve_calls", relationship_type="CALLS",
+                confidence=0.95, direction=direction,
+            ))
     return NeighborsResponse(neighbors=neighbors)
 
 

@@ -17,6 +17,7 @@ interface Props {
   query: string;
   onQueryChange: (value: string) => void;
   apiBase?: string;
+  onInspectSymbol?: (symbol: SymbolListItem) => void;
 }
 
 const labels: Record<SymbolKind, string> = {
@@ -35,6 +36,7 @@ export default function SymbolSearch({
   query,
   onQueryChange,
   apiBase,
+  onInspectSymbol,
 }: Props) {
   const inputId = useId();
 
@@ -229,18 +231,32 @@ export default function SymbolSearch({
                 </span>
               </div>
 
-              <button
-                type="button"
-                className="symbol-search__location"
-                onClick={() => openSource(symbol)}
-                aria-label={
-                  `Open mock location for ${symbol.qualname}, ` +
-                  `lines ${symbol.start_line} to ${symbol.end_line}`
-                }
-              >
-                {symbol.file_path}:L{symbol.start_line}–L
-                {symbol.end_line}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="symbol-search__location"
+                  onClick={() => openSource(symbol)}
+                  aria-label={
+                    `Open mock location for ${symbol.qualname}, ` +
+                    `lines ${symbol.start_line} to ${symbol.end_line}`
+                  }
+                >
+                  {symbol.file_path}:L{symbol.start_line}–L
+                  {symbol.end_line}
+                </button>
+
+                {onInspectSymbol && (
+                  <button
+                    type="button"
+                    className="bauhaus-btn-invert"
+                    style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                    onClick={() => onInspectSymbol(symbol)}
+                    aria-label={`Inspect symbol ${symbol.qualname} detail and neighborhood`}
+                  >
+                    INSPECT NEIGHBORHOOD →
+                  </button>
+                )}
+              </div>
 
               <span className="symbol-search__source-note">
                 Mock location · source not verified
