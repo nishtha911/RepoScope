@@ -1,0 +1,4 @@
+{
+  "utils.py": "def helper():\n    return 1\n",
+  "app.py": "from utils import helper\nclass Base:\n    pass\nclass Child(Base):\n    pass\ndef run():\n    helper()\n    helper()\nrun()\nunknown()\n"
+}

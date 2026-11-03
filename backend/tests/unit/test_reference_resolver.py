@@ -109,3 +109,112 @@ def test_edges_and_result_coverage():
     assert {e.kind for e in edges} == {"CALLS", "INHERITS"}
     assert len({r.reference.reference_key for r in results}) == len(results)
     assert any(r.status == "UNRESOLVED" for r in results)
+
+def test_instance_dictionary_write_does_not_block_imported_class():
+    repo, results = analyze({
+        "store.py": (
+            "class Repo:\n"
+            "    def __init__(self):\n"
+            "        self.items = {}\n"
+            "    def add(self, key, value):\n"
+            "        self.items[key] = value\n"
+        ),
+        "app.py": (
+            "from store import Repo\n"
+            "Repo()\n"
+        ),
+    })
+
+    check(repo, find(results, "Repo()"), "Repo")
+
+
+def test_instance_dictionary_write_does_not_block_module_imported_call():
+    repo, results = analyze({
+        "errors.py": (
+            "class Missing(Exception):\n"
+            "    pass\n"
+        ),
+        "store.py": (
+            "from errors import Missing\n"
+            "class Repo:\n"
+            "    def __init__(self):\n"
+            "        self.items = {}\n"
+            "    def add(self, key, value):\n"
+            "        self.items[key] = value\n"
+            "    def fail(self):\n"
+            "        raise Missing()\n"
+        ),
+        "app.py": "",
+    })
+
+    check(
+        repo,
+        find(results, "Missing()", path="store.py"),
+        "Missing",
+    )
+
+
+def test_reassigned_receiver_keeps_namespace_uncertainty():
+    _, results = analyze({
+        "store.py": (
+            "class Repo:\n"
+            "    def write(self, key, value):\n"
+            "        self = unknown\n"
+            "        self.items[key] = value\n"
+        ),
+        "app.py": (
+            "from store import Repo\n"
+            "Repo()\n"
+        ),
+    })
+
+def test_stdlib_dataclass_constructor_is_resolved():
+    repo, results = analyze({
+        "models.py": (
+            "from dataclasses import dataclass\n"
+            "@dataclass\n"
+            "class User:\n"
+            "    name: str\n"
+        ),
+        "app.py": (
+            "from models import User\n"
+            "User('Soham')\n"
+        ),
+    })
+
+    check(repo, find(results, "User('Soham')"), "User")
+
+
+def test_aliased_stdlib_dataclass_is_resolved():
+    repo, results = analyze({
+        "models.py": (
+            "from dataclasses import dataclass as dc\n"
+            "@dc\n"
+            "class User:\n"
+            "    name: str\n"
+        ),
+        "app.py": (
+            "from models import User\n"
+            "User('Soham')\n"
+        ),
+    })
+
+    check(repo, find(results, "User('Soham')"), "User")
+
+
+def test_custom_decorator_named_dataclass_is_not_trusted():
+    _, results = analyze({
+        "models.py": (
+            "def dataclass(cls):\n"
+            "    return unknown\n"
+            "@dataclass\n"
+            "class User:\n"
+            "    pass\n"
+        ),
+        "app.py": (
+            "from models import User\n"
+            "User()\n"
+        ),
+    })
+
+    assert find(results, "User()").status == "UNRESOLVED"
