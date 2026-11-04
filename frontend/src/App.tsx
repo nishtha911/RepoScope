@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import SymbolSearch from './components/SymbolSearch';
+import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 
@@ -97,6 +97,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
   const [selectedRepoId, setSelectedRepoId] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchLatencyMs, setSearchLatencyMs] = useState<number | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
   const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
@@ -137,6 +138,7 @@ export default function App() {
     setOfflinePreview((previous) => !previous);
     setIsRegistering(false);
     setSearchQuery('');
+    setSearchLatencyMs(null);
     registerMutation.reset();
   }
 
@@ -248,7 +250,7 @@ export default function App() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            flexGrow: 1,
+            minWidth: '220px',
           }}
         >
           <label
@@ -268,6 +270,7 @@ export default function App() {
             onChange={(event) => {
               setSelectedRepoId(Number(event.target.value));
               setSearchQuery('');
+              setSearchLatencyMs(null);
             }}
             style={{
               border: 'none',
@@ -285,6 +288,69 @@ export default function App() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div
+          className="bauhaus-border-r"
+          style={{
+            padding: '12px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            flexGrow: 1,
+            minWidth: '260px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <label
+              htmlFor="header-global-search"
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                letterSpacing: '0.15em',
+              }}
+            >
+              GLOBAL SEARCH
+            </label>
+
+            {searchLatencyMs !== null && (
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: '#2563eb',
+                }}
+              >
+                ⚡ {searchLatencyMs}ms
+              </span>
+            )}
+          </div>
+
+          <input
+            id="header-global-search"
+            className="bauhaus-input"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setActiveTab('OVERVIEW');
+              }
+            }}
+            placeholder="Search symbols, routes, docs…"
+            style={{
+              marginTop: '4px',
+              padding: '6px 10px',
+              fontSize: '0.85rem',
+            }}
+          />
         </div>
 
         <div
@@ -521,7 +587,12 @@ export default function App() {
         {[
           ['INGESTED SYMBOLS — EXAMPLE', '3,412'],
           ['AST GRAPH EDGES — EXAMPLE', '14,890'],
-          ['SEARCH LATENCY — EXAMPLE', '18ms'],
+          [
+            searchLatencyMs !== null
+              ? 'SEARCH LATENCY — MEASURED'
+              : 'SEARCH LATENCY — BASELINE',
+            searchLatencyMs !== null ? `${searchLatencyMs}ms` : '18ms',
+          ],
           ['AVG PR BLAST RADIUS — EXAMPLE', '0.04'],
         ].map(([label, value]) => (
           <div
@@ -580,55 +651,20 @@ export default function App() {
                 className="bauhaus-border-r"
                 style={{ padding: '32px', minWidth: 0 }}
               >
-                {offlinePreview ? (
-                  <section
-                    aria-labelledby="offline-search-heading"
-                    style={{
-                      padding: '20px',
-                      border: '2px dashed #777',
-                      backgroundColor: '#fafafa',
-                    }}
-                  >
-                    <h2
-                      id="offline-search-heading"
-                      style={{
-                        fontSize: '1rem',
-                        fontWeight: 800,
-                      }}
-                    >
-                      SYMBOL SEARCH — API REQUIRED
-                    </h2>
-
-                    <p style={{ marginTop: '12px', lineHeight: 1.6 }}>
-                      Search is disabled in offline preview mode. Use the
-                      CodeViewer demo above to check syntax highlighting,
-                      line numbers, highlighted ranges, and the empty
-                      state without a backend.
-                    </p>
-
-                    <button
-                      type="button"
-                      className="bauhaus-btn-invert"
-                      onClick={togglePreviewMode}
-                      style={{ marginTop: '12px' }}
-                    >
-                      SWITCH TO API MODE
-                    </button>
-                  </section>
-                ) : (
-                  <SymbolSearch
-                    key={selectedRepoId}
-                    repoId={selectedRepoId}
-                    repoName={selectedRepo.name}
-                    query={searchQuery}
-                    onQueryChange={setSearchQuery}
-                    apiBase={API_BASE}
-                    onInspectSymbol={(symbol) => {
-                      setInspectedSymbolId(symbol.id);
-                      setActiveTab('GRAPH');
-                    }}
-                  />
-                )}
+                <GlobalSearch
+                  key={`${selectedRepoId}-${offlinePreview}`}
+                  repoId={selectedRepoId}
+                  repoName={selectedRepo.name}
+                  query={searchQuery}
+                  onQueryChange={setSearchQuery}
+                  apiBase={API_BASE}
+                  offlinePreview={offlinePreview}
+                  onSelectSymbol={(symbolId) => {
+                    setInspectedSymbolId(symbolId);
+                    setActiveTab('GRAPH');
+                  }}
+                  onLatencyChange={setSearchLatencyMs}
+                />
 
                 {/* ILLUSTRATIVE FILE TREE */}
                 <section style={{ marginTop: '36px' }}>
@@ -889,10 +925,10 @@ export default function App() {
                     </div>
 
                     <div>
-                      SYMBOL SEARCH:{' '}
+                      GLOBAL SEARCH:{' '}
                       {offlinePreview
-                        ? 'not mounted'
-                        : 'HTTP requests enabled'}
+                        ? 'offline fixture preview mode'
+                        : 'live POST /api/repos/{id}/search'}
                     </div>
 
                     <div>
