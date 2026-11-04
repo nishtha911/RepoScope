@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, event, select, text
 from sqlalchemy.orm import Session
 
@@ -55,21 +56,18 @@ def parsed_fixture():
 @pytest.fixture(params=["sqlite", "postgresql"])
 def session(request):
     if request.param == "postgresql":
-        url = os.getenv("TEST_GRAPH_DATABASE_URL")
+        project_root = Path(__file__).resolve().parents[3]
+        load_dotenv(project_root / ".env", override=False)
+        url = os.getenv("DATABASE_URL")
 
         if not url:
-            pytest.skip(
-                "Set TEST_GRAPH_DATABASE_URL to a disposable "
-                "PostgreSQL test database"
-            )
+            pytest.fail("DATABASE_URL is missing; check your root .env")
 
         engine = create_engine(url)
 
         if engine.dialect.name != "postgresql":
             engine.dispose()
-            pytest.fail(
-                "TEST_GRAPH_DATABASE_URL must be PostgreSQL"
-            )
+            pytest.fail("DATABASE_URL must point to PostgreSQL")
 
     else:
         engine = create_engine("sqlite:///:memory:")
