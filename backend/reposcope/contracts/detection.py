@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 Framework = Literal["fastapi", "flask"]
-DerivedEdgeKind = Literal["EXPOSES", "CALLS", "USES"]
+DerivedEdgeKind = Literal["EXPOSES", "CALLS", "USES", "TESTED_BY"]
 
 
 def make_endpoint_key(

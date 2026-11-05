@@ -10,6 +10,7 @@ from sqlalchemy import select
 from reposcope.contracts.detection import DetectionResult
 from reposcope.contracts.parsing import ParsedFile
 from reposcope.contracts.resolution import ResolutionResult
+from reposcope.contracts.test_linking import TestLinkingResult
 from reposcope.graph.store import GraphStore
 from reposcope.models.file import File
 from reposcope.models.repository import Repository
@@ -22,6 +23,7 @@ from reposcope.parsing.repository_models import (
     detect_repository_models,
 )
 from reposcope.parsing.resolver_pipeline import analyze_python_files
+from reposcope.parsing.test_detector import detect_test_links
 
 
 @dataclass(frozen=True)
@@ -52,6 +54,9 @@ class GraphPlan:
     results: tuple[ResolutionResult, ...]
     detection: DetectionResult = field(
         default_factory=DetectionResult
+    )
+    test_linking: TestLinkingResult = field(
+        default_factory=TestLinkingResult
     )
 
     @property
@@ -114,6 +119,13 @@ def build_graph_plan(
     analysis = analyze_python_files(
         list(repo.files_by_path.values()),
         source_roots=source_roots,
+    )
+
+    # Use resolver-produced edges only. Endpoint dispatch and other
+    # derived relationships must not become test-link call paths.
+    test_linking = detect_test_links(
+        list(repo.files_by_path.values()),
+        analysis.edges,
     )
 
     nodes = []
@@ -262,6 +274,31 @@ def build_graph_plan(
             _derived_reference_key(edge),
         )
 
+    # Merge test associations by implementation -> test. Distinct call
+    # paths retain distinct reference keys even when the stored edge is
+    # shared. Complete structured evidence lives in plan.test_linking.
+    for link in test_linking.links:
+        reference_key = json.dumps(
+            [
+                "test_link",
+                link.rule,
+                link.test_key,
+                link.implementation_key,
+                list(link.call_path),
+                list(link.reference_keys),
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+
+        merge_edge(
+            link.implementation_key,
+            link.test_key,
+            "TESTED_BY",
+            link.confidence,
+            reference_key,
+        )
+
     edges = tuple(
         EdgeDraft(
             source_key=identity[0],
@@ -280,6 +317,7 @@ def build_graph_plan(
         edges=edges,
         results=analysis.results,
         detection=detection,
+        test_linking=test_linking,
     )
 
 
@@ -515,4 +553,5 @@ def resolution_report(plan):
             for edge in plan.edges
         ],
         "detection": plan.detection.model_dump(mode="json"),
+        "test_linking": plan.test_linking.model_dump(mode="json"),
     }
