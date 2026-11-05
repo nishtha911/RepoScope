@@ -12,6 +12,13 @@ export interface CitationEvidence {
   fused_score?: number | null;
 }
 
+/** Per-stage latency breakdown returned by POST /api/repos/{id}/ask */
+export interface AskTimings {
+  retrieval_ms: number;
+  expansion_ms: number;
+  synthesis_ms: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -21,4 +28,6 @@ export interface ChatMessage {
   citations?: Record<string, CitationEvidence>;
   error?: string;
   latencyMs?: number;
+  /** Per-stage breakdown received from the API (online mode only) */
+  timings?: AskTimings;
 }

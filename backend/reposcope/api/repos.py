@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, HTTPException, Path, Query, status
 
 from reposcope.contracts.api import (
-    AskRequest, AskResponse, FeedbackRequest, FeedbackResponse,
+    AskRequest, AskResponse, AskTimings, FeedbackRequest, FeedbackResponse,
     Neighbor, NeighborsResponse, PRImpactRequest, RecommendationItem,
     RecommendationsResponse, RegisterRepoRequest, RegisterRepoResponse,
     RepositoryResponse, SearchHit, SearchRequest, SearchResponse,
@@ -118,7 +118,9 @@ def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
             evidence_id="E1", snapshot_id=1, file_id=12,
             file_path="backend/reposcope/parsing/resolver.py", symbol_id=101, chunk_id=5,
             start_line=142, end_line=160, text="def resolve_calls(self, ast_tree): ...",
-        )], gaps=[],
+        )],
+        gaps=[],
+        timings=AskTimings(retrieval_ms=38, expansion_ms=14, synthesis_ms=112),
     )
 
 

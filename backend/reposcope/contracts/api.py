@@ -89,10 +89,23 @@ class SearchResponse(APIModel):
     hits: list[SearchHit]
 
 
+class AskTimings(APIModel):
+    """Per-stage latency breakdown for a single /ask call (all values in milliseconds)."""
+
+    retrieval_ms: int = Field(ge=0, description="Hybrid RRF retrieval + vector search duration")
+    expansion_ms: int = Field(ge=0, description="Graph neighbourhood expansion duration")
+    synthesis_ms: int = Field(ge=0, description="LLM synthesis (Gemini / Groq) duration")
+
+    @property
+    def total_ms(self) -> int:
+        return self.retrieval_ms + self.expansion_ms + self.synthesis_ms
+
+
 class AskResponse(APIModel):
     answer: str = Field(min_length=1)
     evidence: list[Evidence]
     gaps: list[str]
+    timings: AskTimings | None = None
 
     @model_validator(mode="after")
     def validate_evidence_ids(self) -> Self:
