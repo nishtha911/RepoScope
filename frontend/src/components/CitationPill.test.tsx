@@ -2,8 +2,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CitationPill from './CitationPill';
+import type { CitationEvidence } from '../types/chat';
 afterEach(cleanup);
-describe('CitationPill', () => {
+describe('CitationPill — drawer mode', () => {
   it('uses a real button and passes the exact evidence ID', () => {
     const select = vi.fn();
     render(<CitationPill evidenceId="E2" onSelect={select} />);
@@ -23,10 +24,9 @@ describe('CitationPill', () => {
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-expanded')).toBe('true');
     expect(button.getAttribute('aria-controls')).toBe('drawer-1');
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import CitationPill from './CitationPill';
-import type { CitationEvidence } from '../types/chat';
+  });
+});
+
 
 const mockEvidence: CitationEvidence = {
   evidence_id: 'E1',
@@ -41,7 +41,7 @@ const mockEvidence: CitationEvidence = {
   fused_score: 0.092,
 };
 
-describe('CitationPill', () => {
+describe('CitationPill — chat popover mode', () => {
   it('renders citation badge with [E1] text', () => {
     render(<CitationPill evidenceId="E1" evidence={mockEvidence} />);
     const button = screen.getByRole('button', { name: /Citation \[E1\]/i });
