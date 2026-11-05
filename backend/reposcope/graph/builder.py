@@ -110,13 +110,14 @@ def build_graph_plan(
     parsed_files: list[ParsedFile],
     *,
     source_roots=(".",),
+    _analysis=None,
 ):
     # Revalidate parser records before any database mutation.
     repo = build_repo_index(
         parsed_files,
         source_roots=source_roots,
     )
-    analysis = analyze_python_files(
+    analysis = _analysis if _analysis is not None else analyze_python_files(
         list(repo.files_by_path.values()),
         source_roots=source_roots,
     )

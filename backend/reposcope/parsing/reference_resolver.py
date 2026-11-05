@@ -1467,6 +1467,7 @@ def resolve_references(
     collection,
     *,
     supported_sqlmodel_locations=(),
+    reference_paths=None,
 ):
     owned = collect_references(collection.binding_index)
     resolver = ReferenceResolver(
@@ -1476,6 +1477,8 @@ def resolve_references(
     results = []
 
     for reference in owned.references:
+        if reference_paths is not None and reference.site.file_path not in reference_paths:
+            continue
         outcome = resolver.resolve(reference)
 
         for target in outcome.targets:

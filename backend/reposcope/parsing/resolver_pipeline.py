@@ -26,13 +26,33 @@ def analyze_python_files(
     parsed_files: list[ParsedFile],
     *,
     source_roots: tuple[str, ...] = (".",),
+    reference_paths=None,
+    cached_results=(),
 ) -> ResolverAnalysis:
     repo = build_repo_index(parsed_files, source_roots=source_roots)
     scopes = build_scope_index(repo)
     bindings = build_binding_index(scopes)
     references = collect_references(bindings)
 
-    first_results = resolve_references(references)
+    paths = None if reference_paths is None else frozenset(reference_paths)
+    if paths is None and cached_results:
+        raise ValueError("cached_results requires reference_paths")
+    if paths is not None and not paths <= set(repo.files_by_path):
+        raise ValueError("Unknown reference path")
+    retained = tuple(
+        result for result in cached_results
+        if result.reference.file_path in repo.files_by_path
+        and result.reference.file_path not in paths
+    ) if paths is not None else ()
+    first_results = retained + resolve_references(
+        references, reference_paths=paths,
+    )
+    def ordered(rows):
+        return tuple(sorted(rows, key=lambda result: (
+            result.reference.file_path, result.reference.start_byte,
+            result.reference.end_byte, result.reference.reference_kind,
+        )))
+    first_results = ordered(first_results)
     model_detection = detect_repository_models(
         list(repo.files_by_path.values()),
         first_results,
@@ -50,14 +70,15 @@ def analyze_python_files(
     }
 
     if verified_locations:
-        results = resolve_references(
+        results = retained + resolve_references(
             references,
             supported_sqlmodel_locations=verified_locations,
+            reference_paths=paths,
         )
     else:
         results = first_results
 
     return ResolverAnalysis(
-        results=results,
-        edges=resolved_edges(results),
+        results=ordered(results),
+        edges=resolved_edges(ordered(results)),
     )
