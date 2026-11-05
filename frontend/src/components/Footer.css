@@ -1,287 +1,69 @@
-/* Bauhaus Architectural Footer */
-.bauhaus-footer {
-  background-color: #000000;
-  color: #ffffff;
+.site-footer {
   border-top: 3px solid #000000;
-  font-family: var(--font-sans, sans-serif);
-  position: relative;
-  width: 100%;
+  background-color: #ffffff;
   margin-top: auto;
 }
 
-/* Primary Color Accent Stripe across top of footer */
-.bauhaus-footer__stripe {
-  display: flex;
-  height: 6px;
-  width: 100%;
-}
-
-.bauhaus-footer__stripe-blue {
-  flex: 3;
-  background-color: #2563eb;
-}
-
-.bauhaus-footer__stripe-red {
-  flex: 2;
-  background-color: #dc2626;
-}
-
-.bauhaus-footer__stripe-yellow {
-  flex: 1;
-  background-color: #facc15;
-}
-
-/* Main 4-Column Grid */
-.bauhaus-footer__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  border-bottom: 2px solid #27272a;
-}
-
-.bauhaus-footer__col {
-  padding: 28px 32px;
-  border-right: 1.5px solid #27272a;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 14px;
-}
-
-.bauhaus-footer__col:last-child {
-  border-right: none;
-}
-
-.bauhaus-footer__col-heading {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: #94a3b8;
-  text-transform: uppercase;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bauhaus-footer__col-heading::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background-color: #2563eb;
-}
-
-/* Brand Column */
-.bauhaus-footer__brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.bauhaus-footer__shapes {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.bauhaus-shape-circle {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #dc2626;
-}
-
-.bauhaus-shape-square {
-  width: 10px;
-  height: 10px;
-  background-color: #2563eb;
-}
-
-.bauhaus-shape-triangle {
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 10px solid #facc15;
-}
-
-.bauhaus-footer__brand-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: #ffffff;
-}
-
-.bauhaus-footer__tagline {
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: #94a3b8;
-  margin: 0;
-}
-
-/* System Pipeline Status Badges */
-.bauhaus-footer__pipeline-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bauhaus-footer__pipeline-item {
+.site-footer__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  background-color: #09090b;
-  border: 1px solid #27272a;
-}
-
-.bauhaus-footer__pipeline-tag {
-  color: #e2e8f0;
-  font-weight: 700;
-}
-
-.bauhaus-footer__pipeline-status {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #22c55e;
-  padding: 1px 5px;
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-/* Navigation Links */
-.bauhaus-footer__nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.bauhaus-footer__nav-btn {
-  background: transparent;
-  border: none;
-  color: #cbd5e1;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-align: left;
-  padding: 4px 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s ease;
-}
-
-.bauhaus-footer__nav-btn:hover {
-  color: #ffffff;
-  padding-left: 4px;
-}
-
-.bauhaus-footer__nav-btn--active {
-  color: #60a5fa;
-  font-weight: 800;
-}
-
-/* Telemetry & Spec Info */
-.bauhaus-footer__specs {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  color: #cbd5e1;
-}
-
-.bauhaus-footer__spec-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px dashed #27272a;
-  padding-bottom: 4px;
-}
-
-.bauhaus-footer__spec-label {
-  color: #64748b;
-  font-weight: 600;
-}
-
-.bauhaus-footer__spec-val {
-  color: #f8fafc;
-  font-weight: 700;
-}
-
-/* Bottom Bar */
-.bauhaus-footer__bottom {
-  padding: 16px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 14px 32px;
   flex-wrap: wrap;
   gap: 12px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  background-color: #09090b;
 }
 
-.bauhaus-footer__status-beacon {
+/* Left side */
+.site-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.site-footer__logo {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #000000;
+}
+
+.site-footer__copy {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #888888;
+}
+
+/* Right side */
+.site-footer__status {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.bauhaus-beacon-dot {
+.site-footer__status-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #555555;
+}
+
+/* Status dots */
+.footer__dot {
+  display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
-  animation: beaconPulse 2s infinite;
+  flex-shrink: 0;
 }
 
-.bauhaus-beacon-dot--offline {
-  background-color: #3b82f6;
-  box-shadow: 0 0 6px #3b82f6;
+.footer__dot--online {
+  background-color: #16a34a;
 }
 
-.bauhaus-beacon-dot--error {
-  background-color: #ef4444;
-  box-shadow: 0 0 6px #ef4444;
+.footer__dot--offline {
+  background-color: #d97706;
 }
 
-@keyframes beaconPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.85);
-  }
-}
-
-.bauhaus-footer__shortcuts {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #64748b;
-}
-
-.bauhaus-footer__shortcuts kbd {
-  background-color: #1e293b;
-  color: #f1f5f9;
-  border: 1px solid #475569;
-  padding: 1px 5px;
-  font-family: inherit;
-  font-size: 0.7rem;
-  border-radius: 2px;
+.footer__dot--error {
+  background-color: #dc2626;
 }

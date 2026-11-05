@@ -1,67 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Footer from './Footer';
 
 describe('Footer', () => {
-  it('renders brand, philosophy, and architectural tagline', () => {
-    render(
-      <Footer
-        offlinePreview
-        activeTab="OVERVIEW"
-        onTabChange={vi.fn()}
-      />,
-    );
+  it('renders brand name and copyright', () => {
+    render(<Footer offlinePreview activeTab="OVERVIEW" onTabChange={vi.fn()} />);
 
     expect(screen.getByText('REPOSCOPE')).toBeInTheDocument();
-    expect(screen.getByText(/FORM FOLLOWS FUNCTION · ARCHITECTURE AS CODE/i)).toBeInTheDocument();
-    expect(screen.getByText('INTELLIGENCE PIPELINES')).toBeInTheDocument();
-    expect(screen.getByText('WORKSPACE VIEWS')).toBeInTheDocument();
-    expect(screen.getByText('SYSTEM TELEMETRY')).toBeInTheDocument();
+    expect(screen.getByText(/© 2026/)).toBeInTheDocument();
   });
 
-  it('renders pipeline stages and statuses', () => {
-    render(
-      <Footer
-        offlinePreview
-        activeTab="OVERVIEW"
-        onTabChange={vi.fn()}
-      />,
-    );
+  it('shows Offline Preview status when offlinePreview=true', () => {
+    render(<Footer offlinePreview activeTab="OVERVIEW" onTabChange={vi.fn()} />);
 
-    expect(screen.getByText('PASS 1: AST SCOPE MAP')).toBeInTheDocument();
-    expect(screen.getByText('PASS 2: REF RESOLVER')).toBeInTheDocument();
-    expect(screen.getByText('RETRIEVAL: RRF FUSION k=60')).toBeInTheDocument();
+    expect(screen.getByText('Offline Preview')).toBeInTheDocument();
   });
 
-  it('triggers onTabChange when clicking navigation view button', () => {
-    const onTabChange = vi.fn();
-    render(
-      <Footer
-        offlinePreview
-        activeTab="OVERVIEW"
-        onTabChange={onTabChange}
-      />,
-    );
-
-    const chatTabBtn = screen.getByRole('button', { name: /04 \/\/ CODEBASE CHAT & RAG/i });
-    fireEvent.click(chatTabBtn);
-
-    expect(onTabChange).toHaveBeenCalledWith('RAG');
-  });
-
-  it('displays offline fixture status beacon in preview mode', () => {
-    render(
-      <Footer
-        offlinePreview
-        activeTab="OVERVIEW"
-        onTabChange={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText(/OFFLINE FIXTURE PREVIEW · ZERO NETWORK/i)).toBeInTheDocument();
-  });
-
-  it('displays online API version when connected', () => {
+  it('shows connected status with API version when online', () => {
     render(
       <Footer
         offlinePreview={false}
@@ -72,6 +27,25 @@ describe('Footer', () => {
       />,
     );
 
-    expect(screen.getByText(/ONLINE · FASTAPI GATEWAY v1.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/API v1\.2 · Connected/i)).toBeInTheDocument();
+  });
+
+  it('shows server unreachable status on health error', () => {
+    render(
+      <Footer
+        offlinePreview={false}
+        activeTab="OVERVIEW"
+        onTabChange={vi.fn()}
+        isHealthError
+      />,
+    );
+
+    expect(screen.getByText('Server Unreachable')).toBeInTheDocument();
+  });
+
+  it('renders footer as a contentinfo landmark', () => {
+    render(<Footer offlinePreview activeTab="OVERVIEW" onTabChange={vi.fn()} />);
+
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 });
