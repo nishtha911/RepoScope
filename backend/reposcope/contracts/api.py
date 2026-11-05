@@ -31,7 +31,14 @@ class AskRequest(APIModel):
 
 
 class PRImpactRequest(APIModel):
-    pr_url: GitHubPullRequestURL
+    pr_url: GitHubPullRequestURL | None = None
+    patch: str | None = Field(default=None, max_length=1_000_000)
+
+    @model_validator(mode="after")
+    def validate_inputs(self) -> Self:
+        if not self.pr_url and not self.patch:
+            raise ValueError("Either pr_url or patch must be provided")
+        return self
 
 
 class FeedbackRequest(APIModel):

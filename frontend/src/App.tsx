@@ -5,6 +5,7 @@ import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
+import PRImpactView from './components/PRImpactView';
 
 type Tab =
   | 'OVERVIEW'
@@ -959,55 +960,14 @@ export default function App() {
           />
         )}
 
-        {/* PR IMPACT PLACEHOLDER */}
+        {/* PR IMPACT SUBMISSION & BLAST RADIUS VIEW */}
         {activeTab === 'PR_IMPACT' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              PR IMPACT ANALYSIS — UI PREVIEW
-            </h2>
-
-            <div
-              className="bauhaus-border-all"
-              style={{ padding: '28px' }}
-            >
-              <p style={{ marginBottom: '16px' }}>
-                This form is a placeholder. No analysis handler is
-                connected.
-              </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                }}
-              >
-                <input
-                  className="bauhaus-input"
-                  aria-label="Git diff or PR branch"
-                  placeholder="e.g. main...feature/ast-resolver"
-                  style={{ flex: '1 1 260px' }}
-                />
-
-                <button
-                  type="button"
-                  className="bauhaus-btn-invert"
-                  disabled
-                >
-                  CALCULATE BLAST RADIUS — NOT CONNECTED
-                </button>
-              </div>
-            </div>
-          </section>
+          <PRImpactView
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            apiBase={API_BASE}
+            offlinePreview={offlinePreview}
+          />
         )}
 
         {/* RAG CODEBASE CHAT */}
