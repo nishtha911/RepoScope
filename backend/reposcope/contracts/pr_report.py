@@ -10,7 +10,8 @@ class PRImpactReport(BaseModel):
         str_strip_whitespace=True,
     )
 
-    pr_url: GitHubPullRequestURL
+    pr_url: GitHubPullRequestURL | None = None
+    patch_name: str | None = None
     risk_level: str = Field(pattern=r"^(LOW|MEDIUM|HIGH|CRITICAL)$")
     risk_score: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     files_changed_count: int = Field(ge=0)

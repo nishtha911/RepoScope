@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { ChatMessage, CitationEvidence } from '../types/chat';
+import type { ChatMessage, CitationEvidence, AskTimings } from '../types/chat';
 import {
   initialChatMessages,
   sampleStarterPrompts,
   fixturePromptResponses,
-  fixtureEvidence,
 } from '../fixtures/chat';
 import MarkdownRenderer from './MarkdownRenderer';
 import './CodebaseChat.css';
@@ -153,6 +152,7 @@ export const CodebaseChat: React.FC<Props> = ({
                       isStreaming: false,
                       citations: target.citations,
                       latencyMs: target.latencyMs,
+                      timings: target.timings,
                     }
                   : msg,
               ),
@@ -178,7 +178,7 @@ export const CodebaseChat: React.FC<Props> = ({
           }
         }, 40);
       } else {
-        // Online mode: Connect to API
+        // Online mode: Connect to live POST /api/repos/{id}/ask
         const controller = new AbortController();
         abortControllerRef.current = controller;
         const startTime = performance.now();
@@ -199,10 +199,39 @@ export const CodebaseChat: React.FC<Props> = ({
             );
           }
 
-          const data = await response.json();
-          const content = data.answer || data.content || 'No response generated.';
-          const citations: Record<string, CitationEvidence> =
-            data.citations || fixtureEvidence;
+          const data = await response.json() as {
+            answer?: string;
+            content?: string;
+            citations?: Record<string, CitationEvidence>;
+            evidence?: Array<{
+              evidence_id: string;
+              file_path: string;
+              start_line: number;
+              end_line: number;
+              text: string;
+              symbol_id?: number;
+            }>;
+            timings?: AskTimings;
+          };
+          const content = data.answer ?? data.content ?? 'No response generated.';
+
+          // Map evidence array → citation record (evidence_id → CitationEvidence)
+          const citations: Record<string, CitationEvidence> = data.citations ?? {};
+          if (data.evidence && Object.keys(citations).length === 0) {
+            for (const ev of data.evidence) {
+              citations[ev.evidence_id] = {
+                evidence_id: ev.evidence_id,
+                name: ev.file_path,
+                file_path: ev.file_path,
+                start_line: ev.start_line,
+                end_line: ev.end_line,
+                snippet: ev.text,
+                kind: 'function',
+                symbol_id: ev.symbol_id,
+                origin: 'seed',
+              };
+            }
+          }
 
           setMessages((prev) =>
             prev.map((msg) =>
@@ -213,6 +242,7 @@ export const CodebaseChat: React.FC<Props> = ({
                     isStreaming: false,
                     citations,
                     latencyMs: elapsed,
+                    timings: data.timings,
                   }
                 : msg,
             ),
@@ -368,7 +398,7 @@ export const CodebaseChat: React.FC<Props> = ({
                       <div className="chat-bubble__metrics-row">
                         {message.latencyMs !== undefined && (
                           <span>
-                            ⚡ LATENCY: <strong className="chat-bubble__latency-tag">{message.latencyMs}ms</strong>
+                            ⚡ TOTAL: <strong className="chat-bubble__latency-tag">{message.latencyMs}ms</strong>
                           </span>
                         )}
 
@@ -389,6 +419,34 @@ export const CodebaseChat: React.FC<Props> = ({
                           </button>
                         </div>
                       </div>
+
+                      {/* TIMING BREAKDOWN FOOTER */}
+                      {message.timings && (
+                        <div className="chat-bubble__timings" aria-label="Pipeline timing breakdown">
+                          <span className="chat-bubble__timings-label">PIPELINE TIMINGS</span>
+                          <span className="chat-bubble__timing-stage">
+                            <span className="chat-bubble__timing-stage-name">Retrieval</span>
+                            <span className="chat-bubble__timing-stage-value">{message.timings.retrieval_ms}ms</span>
+                          </span>
+                          <span className="chat-bubble__timing-sep" aria-hidden="true">+</span>
+                          <span className="chat-bubble__timing-stage">
+                            <span className="chat-bubble__timing-stage-name">Graph Expansion</span>
+                            <span className="chat-bubble__timing-stage-value">{message.timings.expansion_ms}ms</span>
+                          </span>
+                          <span className="chat-bubble__timing-sep" aria-hidden="true">+</span>
+                          <span className="chat-bubble__timing-stage">
+                            <span className="chat-bubble__timing-stage-name">LLM Synthesis</span>
+                            <span className="chat-bubble__timing-stage-value">{message.timings.synthesis_ms}ms</span>
+                          </span>
+                          <span className="chat-bubble__timing-sep" aria-hidden="true">=</span>
+                          <span className="chat-bubble__timing-stage chat-bubble__timing-stage--total">
+                            <span className="chat-bubble__timing-stage-name">Total</span>
+                            <span className="chat-bubble__timing-stage-value">
+                              {message.timings.retrieval_ms + message.timings.expansion_ms + message.timings.synthesis_ms}ms
+                            </span>
+                          </span>
+                        </div>
+                      )}
 
                       {/* EXPANDABLE REFERENCED EVIDENCE DRAWER */}
                       {hasCitations && (
