@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
+import CodebaseChat from './components/CodebaseChat';
 
 type Tab =
   | 'OVERVIEW'
@@ -1009,52 +1010,18 @@ export default function App() {
           </section>
         )}
 
-        {/* RAG PLACEHOLDER */}
+        {/* RAG CODEBASE CHAT */}
         {activeTab === 'RAG' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              EVIDENCE-CITED GraphRAG — UI PREVIEW
-            </h2>
-
-            <div
-              className="bauhaus-border-all"
-              style={{ padding: '24px' }}
-            >
-              <p style={{ marginBottom: '16px' }}>
-                This interface is not connected to retrieval or an LLM.
-              </p>
-
-              <textarea
-                className="bauhaus-input"
-                aria-label="Question about the repository"
-                rows={4}
-                placeholder="Ask a question about the repository..."
-                style={{
-                  boxSizing: 'border-box',
-                  width: '100%',
-                  resize: 'vertical',
-                  marginBottom: '16px',
-                }}
-              />
-
-              <button
-                type="button"
-                className="bauhaus-btn-invert"
-                disabled
-              >
-                GENERATE RESPONSE — NOT CONNECTED
-              </button>
-            </div>
-          </section>
+          <CodebaseChat
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            apiBase={API_BASE}
+            offlinePreview={offlinePreview}
+            onSelectSymbol={(symbolId) => {
+              setInspectedSymbolId(symbolId);
+              setActiveTab('OVERVIEW');
+            }}
+          />
         )}
 
         {/* SYNTHETIC RECOMMENDATIONS */}
