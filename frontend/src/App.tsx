@@ -1,17 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
-
-type Tab =
-  | 'OVERVIEW'
-  | 'GRAPH'
-  | 'PR_IMPACT'
-  | 'RAG'
-  | 'RECOMMENDATIONS';
+import Footer, { type Tab } from './components/Footer';
 
 const API_BASE = 'http://localhost:8000/api';
 
@@ -102,6 +96,27 @@ export default function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
   const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
+
+  // Global Bauhaus keyboard shortcuts (Cmd/Ctrl + K for search, / for chat)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('header-global-search') as HTMLInputElement | null;
+        searchInput?.focus();
+        searchInput?.select();
+      } else if (
+        e.key === '/' &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
+        e.preventDefault();
+        setActiveTab('RAG');
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const selectedRepo =
     mockRepos.find((repo) => repo.id === selectedRepoId) ??
@@ -309,16 +324,33 @@ export default function App() {
               alignItems: 'center',
             }}
           >
-            <label
-              htmlFor="header-global-search"
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-              }}
-            >
-              GLOBAL SEARCH
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label
+                htmlFor="header-global-search"
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.15em',
+                }}
+              >
+                GLOBAL SEARCH
+              </label>
+
+              <kbd
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  backgroundColor: '#000000',
+                  color: '#ffffff',
+                  padding: '1px 5px',
+                  border: '1px solid #000000',
+                }}
+                title="Press ⌘K or Ctrl+K to search"
+              >
+                ⌘K
+              </kbd>
+            </div>
 
             {searchLatencyMs !== null && (
               <span
@@ -1100,29 +1132,14 @@ export default function App() {
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer
-        className="bauhaus-border-t"
-        style={{
-          padding: '20px 32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          backgroundColor: '#000000',
-          color: '#ffffff',
-          fontSize: '0.8rem',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        <div>REPOSCOPE // BAUHAUS DESIGN EDITION</div>
-
-        <div>
-          {offlinePreview
-            ? 'LOCAL FIXTURE PREVIEW // NO BACKEND REQUIRED'
-            : 'API MODE // DATA SOURCES REQUIRE VERIFICATION'}
-        </div>
-      </footer>
+      {/* UPGRADED ARCHITECTURAL BAUHAUS FOOTER */}
+      <Footer
+        offlinePreview={offlinePreview}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        apiHealth={healthData}
+        isHealthError={isHealthError}
+      />
     </div>
   );
 }
