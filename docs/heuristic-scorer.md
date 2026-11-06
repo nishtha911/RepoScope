@@ -60,3 +60,4 @@ Run test suite:
 uv run pytest -o pythonpath=. tests/unit/test_heuristic_scorer.py -v
 ```
 All 23 focused unit tests cover formula calculations, division safety, boundary validations, feature derivations, and report sorting determinism.
+
