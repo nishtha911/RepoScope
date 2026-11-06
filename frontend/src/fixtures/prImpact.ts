@@ -101,3 +101,4 @@ export const initialAnalysisHistory: PRAnalysisHistoryItem[] = [
     analyzed_at: Date.now() - 3600_000 * 24,
   },
 ];
+

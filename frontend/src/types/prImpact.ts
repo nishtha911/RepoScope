@@ -23,3 +23,4 @@ export interface PRImpactRequestPayload {
   pr_url?: string | null;
   patch?: string | null;
 }
+
