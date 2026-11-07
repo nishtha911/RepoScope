@@ -6,6 +6,8 @@ import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
 import PRImpactView from './components/PRImpactView';
+import PROverviewCard from './components/PROverviewCard';
+import { initialAnalysisHistory } from './fixtures/prImpact';
 
 type Tab =
   | 'OVERVIEW'
@@ -20,27 +22,6 @@ const mockRepos = [
   {
     id: 1,
     name: 'nishtha911/RepoScope',
-  },
-];
-
-const recentPRImpacts = [
-  {
-    pr: '#42 Refactor resolver.py AST pass',
-    risk: 'LOW (0.04)',
-    blastCount: 14,
-    filesChanged: 3,
-  },
-  {
-    pr: '#41 Upgrade pgvector HNSW index params',
-    risk: 'MED (0.18)',
-    blastCount: 42,
-    filesChanged: 7,
-  },
-  {
-    pr: '#40 Add evidence pack validator',
-    risk: 'LOW (0.01)',
-    blastCount: 6,
-    filesChanged: 2,
   },
 ];
 
@@ -830,59 +811,14 @@ export default function App() {
                     gap: '16px',
                   }}
                 >
-                  {recentPRImpacts.map((item) => (
-                    <div
-                      key={item.pr}
-                      className="bauhaus-border-all"
-                      style={{ padding: '20px' }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          flexWrap: 'wrap',
-                          gap: '12px',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 800,
-                            fontSize: '0.95rem',
-                          }}
-                        >
-                          {item.pr}
-                        </span>
-
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            padding: '4px 10px',
-                            border: '2px solid #000000',
-                          }}
-                        >
-                          EXAMPLE RISK: {item.risk}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '24px',
-                          fontSize: '0.8rem',
-                          fontFamily: 'var(--font-mono)',
-                        }}
-                      >
-                        <span>
-                          AFFECTED SYMBOLS: {item.blastCount}
-                        </span>
-
-                        <span>FILES: {item.filesChanged}</span>
-                      </div>
-                    </div>
+                  {initialAnalysisHistory.slice(0, 3).map((item) => (
+                    <PROverviewCard
+                      key={item.id}
+                      report={item}
+                      title={item.title}
+                      compact
+                      onViewDetails={() => setActiveTab('PR_IMPACT')}
+                    />
                   ))}
                 </div>
 

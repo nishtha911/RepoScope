@@ -9,6 +9,8 @@ import {
   sampleGitPatch,
   initialAnalysisHistory,
 } from '../fixtures/prImpact';
+import { PROverviewCard } from './PROverviewCard';
+import { getRiskBadgeClass } from '../utils/prImpact';
 import './PRImpactView.css';
 
 interface Props {
@@ -174,20 +176,6 @@ export const PRImpactView: React.FC<Props> = ({
       setValidationError(`Failed to calculate PR impact: ${msg}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const getRiskBadgeClass = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'CRITICAL':
-        return 'pr-risk-badge--critical';
-      case 'HIGH':
-        return 'pr-risk-badge--high';
-      case 'MEDIUM':
-        return 'pr-risk-badge--medium';
-      case 'LOW':
-      default:
-        return 'pr-risk-badge--low';
     }
   };
 
@@ -359,54 +347,12 @@ export const PRImpactView: React.FC<Props> = ({
 
       {/* ACTIVE REPORT CARD */}
       {activeReport && (
-        <section className="pr-impact-view__report-card bauhaus-border-b" aria-label="PR Impact Assessment Result">
-          <div className="pr-impact-view__report-header">
-            <div>
-              <span className="pr-impact-view__report-tag">ACTIVE ASSESSMENT REPORT</span>
-              <h3 className="pr-impact-view__report-title">
-                {activeReport.pr_url || activeReport.patch_name || 'Pull Request Analysis'}
-              </h3>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div className="pr-impact-view__risk-score-wrap">
-                <span className="pr-impact-view__risk-score-label">RISK SCORE</span>
-                <span className="pr-impact-view__risk-score-val">
-                  {activeReport.risk_score.toFixed(2)}
-                </span>
-              </div>
-
-              <span className={`pr-risk-badge ${getRiskBadgeClass(activeReport.risk_level)}`}>
-                {activeReport.risk_level} RISK
-              </span>
-            </div>
-          </div>
-
-          {/* METRICS GRID */}
-          <div className="pr-impact-view__metrics-grid">
-            <div className="pr-impact-view__metric-box">
-              <span className="pr-impact-view__metric-label">FILES CHANGED</span>
-              <span className="pr-impact-view__metric-val">{activeReport.files_changed_count}</span>
-            </div>
-            <div className="pr-impact-view__metric-box">
-              <span className="pr-impact-view__metric-label">IMPACTED SYMBOLS</span>
-              <span className="pr-impact-view__metric-val">{activeReport.impacted_symbols_count}</span>
-            </div>
-            <div className="pr-impact-view__metric-box">
-              <span className="pr-impact-view__metric-label">AFFECTED ENDPOINTS</span>
-              <span className="pr-impact-view__metric-val">{activeReport.affected_endpoints_count}</span>
-            </div>
-            <div className="pr-impact-view__metric-box">
-              <span className="pr-impact-view__metric-label">IMPACTED TESTS</span>
-              <span className="pr-impact-view__metric-val">{activeReport.impacted_tests_count}</span>
-            </div>
-          </div>
-
-          {/* SUMMARY RATIONALE */}
-          <div className="pr-impact-view__summary-box">
-            <strong>IMPACT SUMMARY: </strong>
-            <span>{activeReport.summary}</span>
-          </div>
+        <section className="pr-impact-view__report-container bauhaus-border-b" aria-label="PR Impact Assessment Result">
+          <PROverviewCard
+            report={activeReport}
+            kicker="ACTIVE ASSESSMENT REPORT"
+            title={activeReport.pr_url || activeReport.patch_name || 'Pull Request Analysis'}
+          />
         </section>
       )}
 

@@ -17,6 +17,14 @@ export const samplePRUrls = [
     label: '#39 Add Git churn statistics extraction',
     url: 'https://github.com/nishtha911/RepoScope/pull/39',
   },
+  {
+    label: '#38 Breaking auth middleware & routes',
+    url: 'https://github.com/nishtha911/RepoScope/pull/38',
+  },
+  {
+    label: '#37 Drop legacy PostgreSQL tables',
+    url: 'https://github.com/nishtha911/RepoScope/pull/37',
+  },
 ];
 
 export const sampleGitPatch = `diff --git a/backend/reposcope/parsing/resolver.py b/backend/reposcope/parsing/resolver.py
@@ -100,5 +108,32 @@ export const initialAnalysisHistory: PRAnalysisHistoryItem[] = [
     summary: 'Extracts 90-day git churn statistics into git_stats table. Schema addition is backwards-compatible.',
     analyzed_at: Date.now() - 3600_000 * 24,
   },
+  {
+    id: 'pr-38',
+    title: '#38 Breaking auth middleware & routes',
+    pr_url: 'https://github.com/nishtha911/RepoScope/pull/38',
+    input_type: 'pr_url',
+    risk_level: 'HIGH',
+    risk_score: 0.68,
+    files_changed_count: 14,
+    impacted_symbols_count: 65,
+    affected_endpoints_count: 6,
+    impacted_tests_count: 8,
+    summary: 'Refactors API request authorization headers and session dependency injection across primary routes.',
+    analyzed_at: Date.now() - 3600_000 * 36,
+  },
+  {
+    id: 'pr-37',
+    title: '#37 Drop legacy PostgreSQL tables',
+    pr_url: 'https://github.com/nishtha911/RepoScope/pull/37',
+    input_type: 'pr_url',
+    risk_level: 'CRITICAL',
+    risk_score: 0.92,
+    files_changed_count: 22,
+    impacted_symbols_count: 128,
+    affected_endpoints_count: 12,
+    impacted_tests_count: 15,
+    summary: 'Drops v0 schema tables and removes backward-compatible ORM models without fallback migrations.',
+    analyzed_at: Date.now() - 3600_000 * 48,
+  },
 ];
-

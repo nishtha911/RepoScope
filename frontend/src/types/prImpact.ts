@@ -1,4 +1,12 @@
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type RiskLevel =
+  | 'LOW'
+  | 'MEDIUM'
+  | 'HIGH'
+  | 'CRITICAL'
+  | 'Low'
+  | 'Medium'
+  | 'High'
+  | 'Critical';
 
 export interface PRImpactReport {
   pr_url?: string | null;
@@ -23,4 +31,3 @@ export interface PRImpactRequestPayload {
   pr_url?: string | null;
   patch?: string | null;
 }
-

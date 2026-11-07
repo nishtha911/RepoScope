@@ -26,8 +26,9 @@ describe('PRImpactView', () => {
     // Initial Active Report
     expect(screen.getByText('ACTIVE ASSESSMENT REPORT')).toBeInTheDocument();
     expect(screen.getAllByText('RISK SCORE').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('FILES CHANGED')).toBeInTheDocument();
-    expect(screen.getByText('IMPACTED SYMBOLS')).toBeInTheDocument();
+    expect(screen.getByTestId('metric-files')).toBeInTheDocument();
+    expect(screen.getByTestId('metric-symbols')).toBeInTheDocument();
+    expect(screen.getByTestId('metric-endpoints')).toBeInTheDocument();
 
     // History Table
     expect(screen.getByText('RECENT PR IMPACT ANALYSES')).toBeInTheDocument();
@@ -72,7 +73,7 @@ describe('PRImpactView', () => {
 
     // Submitting finishes, report updated
     expect(screen.queryByText('CALCULATING BLAST RADIUS…')).not.toBeInTheDocument();
-    expect(screen.getByText('LOW RISK')).toBeInTheDocument();
+    expect(screen.getAllByRole('status', { name: /risk level: low/i }).length).toBeGreaterThanOrEqual(1);
   });
 
   it('switches to raw git patch tab, loads sample patch, and submits', async () => {
@@ -112,7 +113,7 @@ describe('PRImpactView', () => {
     expect(
       screen.getAllByText('https://github.com/nishtha911/RepoScope/pull/41').length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('MEDIUM RISK').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('status', { name: /risk level: medium/i }).length).toBeGreaterThanOrEqual(1);
   });
 
   it('wires live API POST /api/repos/{id}/pr-impact in online mode', async () => {
@@ -166,7 +167,9 @@ describe('PRImpactView', () => {
       }),
     );
 
-    expect(await screen.findByText('HIGH RISK')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('status', { name: /risk level: high/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('0.65').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('High blast radius modification touching core database schema.')).toBeInTheDocument();
   });

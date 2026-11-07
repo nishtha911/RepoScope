@@ -179,7 +179,12 @@
   font-weight: 700;
 }
 
-/* Active Report Card */
+/* Active Report Card Container */
+.pr-impact-view__report-container {
+  padding: 24px 32px;
+  background-color: #fafbfc;
+}
+
 .pr-impact-view__report-card {
   padding: 24px 32px;
   background-color: #fafbfc;
