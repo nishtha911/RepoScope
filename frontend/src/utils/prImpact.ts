@@ -22,3 +22,4 @@ export function getRiskBadgeClass(risk: RiskLevel | string): string {
       return 'pr-risk-badge--low';
   }
 }
+
