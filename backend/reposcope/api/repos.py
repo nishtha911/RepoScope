@@ -153,16 +153,6 @@ def pr_impact(repo_id: PathID, payload: PRImpactRequest) -> PRImpactReport:
     )
 
 
-@router.get("/repos/{repo_id}/recommendations", response_model=RecommendationsResponse)
-def get_recommendations(
-    repo_id: PathID, k: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> RecommendationsResponse:
-    items = [RecommendationItem(
-        id=1, snapshot_id=1, symbol_id=101, category="UNTESTED_HOTSPOT",
-        title="Add unit test for SymbolResolver.resolve_calls",
-        description="High fan-in symbol lacks direct unit test coverage.", score=0.94, confidence=0.9,
-    )]
-    return RecommendationsResponse(recommendations=items[:k])
 
 
 @router.get("/symbols/{symbol_id}", response_model=SymbolDetailResponse)

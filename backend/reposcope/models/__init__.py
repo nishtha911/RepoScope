@@ -6,3 +6,5 @@ from reposcope.models.symbol import Symbol
 from reposcope.models.edge import Edge
 from reposcope.models.chunk import Chunk
 from reposcope.models.git_stat import GitStat
+
+from reposcope.models.recommendation import RecommendationRun, RecommendationRecord

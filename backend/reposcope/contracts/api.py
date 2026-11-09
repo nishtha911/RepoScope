@@ -124,10 +124,21 @@ class AskResponse(APIModel):
 
 class RecommendationItem(Finding):
     id: PositiveID
+    rationale: str | None = None
+    rationale_source: Literal["llm_constrained", "deterministic"] | None = None
+    rationale_degraded_reason: str | None = None
+    feature_citations: list[dict[str, Any]] = Field(default_factory=list)
+    computed_features: dict[str, Any] = Field(default_factory=dict)
+    detector_evidence: dict[str, Any] = Field(default_factory=dict)
 
 
 class RecommendationsResponse(APIModel):
     recommendations: list[RecommendationItem]
+    repo_id: PositiveID | None = None
+    snapshot_id: PositiveID | None = None
+    commit_sha: str | None = None
+    run_id: PositiveID | None = None
+    gaps: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class Neighbor(APIModel):
