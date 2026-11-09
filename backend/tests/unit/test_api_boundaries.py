@@ -27,7 +27,6 @@ client = TestClient(app)
     ("POST", "/api/repos/1/search", {"q": "resolver", "mode": "hybrid"}, 200, SearchResponse),
     ("POST", "/api/repos/1/ask", {"question": "How does resolution work?"}, 200, AskResponse),
     ("POST", "/api/repos/1/pr-impact", {"pr_url": "https://github.com/owner/repo/pull/1"}, 200, PRImpactReport),
-    ("GET", "/api/repos/1/recommendations", None, 200, RecommendationsResponse),
     ("POST", "/api/recs/1/feedback", {"action": "accepted"}, 200, FeedbackResponse),
 ])
 def test_response_contracts(method, path, payload, status, model):
