@@ -1,7 +1,18 @@
 from sqlalchemy import ForeignKey, Text, Index
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
-from pgvector.sqlalchemy import Vector
+
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:  # pragma: no cover
+    from sqlalchemy.types import UserDefinedType
+
+    class Vector(UserDefinedType):  # type: ignore[no-redef]
+        def __init__(self, dim=None):
+            self.dim = dim
+
+        def get_col_spec(self, **kw):
+            return f"vector({self.dim})" if self.dim else "vector"
 
 from reposcope.models.base import Base
 
