@@ -58,3 +58,4 @@ export interface RecommendationsResponse {
   run_id: number | null;
   gaps: Array<Record<string, unknown>>;
 }
+

@@ -413,3 +413,4 @@ export const sampleRecommendationsResponse: RecommendationsResponse = {
   run_id: 42,
   gaps: [],
 };
+

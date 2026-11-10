@@ -77,3 +77,4 @@ export function formatScore(score?: number | null): string {
   if (typeof score !== 'number' || isNaN(score)) return '0.00';
   return score.toFixed(2);
 }
+
