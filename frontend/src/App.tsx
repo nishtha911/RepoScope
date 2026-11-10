@@ -7,6 +7,7 @@ import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
 import PRImpactView from './components/PRImpactView';
 import PROverviewCard from './components/PROverviewCard';
+import RecommendationsBoard from './components/RecommendationsBoard';
 import { initialAnalysisHistory } from './fixtures/prImpact';
 
 type Tab =
@@ -920,79 +921,18 @@ export default function App() {
           />
         )}
 
-        {/* SYNTHETIC RECOMMENDATIONS */}
+        {/* WHAT TO WORK ON NEXT RECOMMENDATIONS BOARD */}
         {activeTab === 'RECOMMENDATIONS' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              RECOMMENDATIONS — SYNTHETIC EXAMPLES
-            </h2>
-
-            <p style={{ marginBottom: '16px' }}>
-              These cards are static examples, not outputs from a trained
-              ranker or a repository analysis.
-            </p>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
-              <div
-                className="bauhaus-border-all"
-                style={{ padding: '20px' }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    display: 'block',
-                    marginBottom: '6px',
-                  }}
-                >
-                  EXAMPLE PRIORITY #1 // FIXTURE SCORE: 0.94
-                </span>
-
-                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  Add test coverage for{' '}
-                  <code>SymbolResolver.resolve_calls()</code>
-                </h3>
-              </div>
-
-              <div
-                className="bauhaus-border-all"
-                style={{ padding: '20px' }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    display: 'block',
-                    marginBottom: '6px',
-                  }}
-                >
-                  EXAMPLE PRIORITY #2 // FIXTURE SCORE: 0.88
-                </span>
-
-                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  Optimize pgvector HNSW index parameters for large
-                  repositories
-                </h3>
-              </div>
-            </div>
-          </section>
+          <RecommendationsBoard
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            apiBase={API_BASE}
+            offlinePreview={offlinePreview}
+            onInspectSymbol={(symbolId) => {
+              setInspectedSymbolId(symbolId);
+              setActiveTab('GRAPH');
+            }}
+          />
         )}
       </main>
 
