@@ -3,9 +3,6 @@ import type {
   PRImpactReport,
   PRAnalysisHistoryItem,
   PRImpactRequestPayload,
-  AffectedEndpointItem,
-  ImpactedTestItem,
-  MissingTestItem,
   PRFeedbackStatus,
 } from '../types/prImpact';
 import {

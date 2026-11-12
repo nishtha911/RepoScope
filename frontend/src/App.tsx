@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
+import PRImpactView from './components/PRImpactView';
+import PROverviewCard from './components/PROverviewCard';
+import RecommendationsBoard from './components/RecommendationsBoard';
+import { initialAnalysisHistory } from './fixtures/prImpact';
 
 type Tab =
   | 'OVERVIEW'
@@ -82,27 +86,6 @@ export default function App() {
   const [newRepoUrl, setNewRepoUrl] = useState('');
   const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
 
-  // Global Bauhaus keyboard shortcuts (Cmd/Ctrl + K for search, / for chat)
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        const searchInput = document.getElementById('header-global-search') as HTMLInputElement | null;
-        searchInput?.focus();
-        searchInput?.select();
-      } else if (
-        e.key === '/' &&
-        document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
-      ) {
-        e.preventDefault();
-        setActiveTab('RAG');
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const selectedRepo =
     mockRepos.find((repo) => repo.id === selectedRepoId) ??
     mockRepos[0]!;
@@ -165,73 +148,106 @@ export default function App() {
     >
       {/* TOP HEADER */}
       <header
+        className="bauhaus-border-b"
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'stretch',
-          backgroundColor: '#000000',
-          borderBottom: '3px solid #000000',
+          backgroundColor: '#ffffff',
         }}
       >
-        {/* Brand */}
         <div
+          className="bauhaus-border-r"
           style={{
-            padding: '0 32px',
+            padding: '16px 32px',
+            backgroundColor: '#000000',
+            color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
-            gap: '14px',
-            borderRight: '3px solid #222222',
-            flexShrink: 0,
+            gap: '18px',
           }}
         >
           <img
             src="/image.png"
             alt="RepoScope Logo"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '54px',
+              height: '54px',
               objectFit: 'contain',
+              border: '2px solid #ffffff',
               backgroundColor: '#ffffff',
               padding: '2px',
-              borderRadius: '2px',
             }}
           />
+
           <span
             style={{
-              fontSize: '1.1rem',
+              fontSize: '1.6rem',
               fontWeight: 800,
-              letterSpacing: '0.16em',
-              color: '#ffffff',
-              fontFamily: 'var(--font-sans)',
+              letterSpacing: '0.14em',
             }}
           >
             REPOSCOPE
           </span>
         </div>
 
-        {/* Repo selector */}
         <div
+          className="bauhaus-border-r"
           style={{
-            padding: '14px 24px',
+            padding: '16px 24px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            borderRight: '1px solid #333333',
-            minWidth: '200px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+            }}
+          >
+            SYSTEM STATUS
+          </span>
+
+          <span
+            style={{
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+              marginTop: '4px',
+              color:
+                !offlinePreview && isHealthError
+                  ? '#b91c1c'
+                  : '#000000',
+            }}
+          >
+            {systemStatus}
+          </span>
+        </div>
+
+        <div
+          className="bauhaus-border-r"
+          style={{
+            padding: '16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            minWidth: '220px',
           }}
         >
           <label
             htmlFor="target-repository"
             style={{
-              fontSize: '0.65rem',
+              fontSize: '0.7rem',
               fontWeight: 700,
-              letterSpacing: '0.12em',
-              color: '#888888',
-              textTransform: 'uppercase',
-              marginBottom: '4px',
+              letterSpacing: '0.15em',
             }}
           >
-            Repository
+            TARGET REPOSITORY
           </label>
+
           <select
             id="target-repository"
             value={selectedRepoId}
@@ -243,75 +259,67 @@ export default function App() {
             style={{
               border: 'none',
               background: 'transparent',
-              fontSize: '0.9rem',
-              fontWeight: 600,
+              fontSize: '1rem',
+              fontWeight: 700,
               fontFamily: 'var(--font-sans)',
               cursor: 'pointer',
-              color: '#ffffff',
+              marginTop: '4px',
             }}
           >
             {mockRepos.map((repo) => (
-              <option key={repo.id} value={repo.id} style={{ color: '#000000', background: '#ffffff' }}>
-                {repo.name}
+              <option key={repo.id} value={repo.id}>
+                {repo.name} (mock)
               </option>
             ))}
           </select>
         </div>
 
-        {/* Search */}
         <div
+          className="bauhaus-border-r"
           style={{
-            padding: '14px 24px',
+            padding: '12px 24px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             flexGrow: 1,
-            borderRight: '1px solid #333333',
-            minWidth: '240px',
+            minWidth: '260px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <label
               htmlFor="header-global-search"
               style={{
-                fontSize: '0.65rem',
+                fontSize: '0.7rem',
                 fontWeight: 700,
-                letterSpacing: '0.12em',
-                color: '#888888',
-                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
               }}
             >
-              Search
+              GLOBAL SEARCH
             </label>
-            <kbd
-              style={{
-                fontSize: '0.6rem',
-                fontFamily: 'var(--font-mono)',
-                backgroundColor: '#333333',
-                color: '#aaaaaa',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                border: '1px solid #444444',
-              }}
-              title="Press ⌘K or Ctrl+K to search"
-            >
-              ⌘K
-            </kbd>
+
             {searchLatencyMs !== null && (
               <span
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
                   fontFamily: 'var(--font-mono)',
-                  color: '#60a5fa',
-                  marginLeft: 'auto',
+                  color: '#2563eb',
                 }}
               >
                 ⚡ {searchLatencyMs}ms
               </span>
             )}
           </div>
+
           <input
             id="header-global-search"
+            className="bauhaus-input"
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -322,84 +330,47 @@ export default function App() {
             }}
             placeholder="Search symbols, routes, docs…"
             style={{
-              background: '#1a1a1a',
-              border: '1px solid #333333',
-              borderRadius: '4px',
+              marginTop: '4px',
               padding: '6px 10px',
-              fontSize: '0.875rem',
-              color: '#ffffff',
-              fontFamily: 'var(--font-sans)',
-              outline: 'none',
-              width: '100%',
+              fontSize: '0.85rem',
             }}
           />
         </div>
 
-        {/* Status + Actions */}
         <div
           style={{
-            padding: '14px 24px',
+            padding: '16px 24px',
             display: 'flex',
             alignItems: 'center',
+            flexWrap: 'wrap',
             gap: '12px',
-            flexShrink: 0,
           }}
         >
-          <span
-            style={{
-              fontSize: '0.75rem',
-              fontFamily: 'var(--font-mono)',
-              color: !offlinePreview && isHealthError ? '#f87171' : '#6ee7b7',
-              marginRight: '8px',
-            }}
-          >
-            {systemStatus}
-          </span>
-
           <button
             type="button"
+            className="bauhaus-btn-invert"
             onClick={togglePreviewMode}
             disabled={registerMutation.isPending}
-            style={{
-              padding: '7px 14px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-sans)',
-              letterSpacing: '0.06em',
-              background: 'transparent',
-              color: '#cccccc',
-              border: '1px solid #444444',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
           >
-            {offlinePreview ? 'Connect API' : 'Go Offline'}
+            {offlinePreview
+              ? 'CONNECT TO API'
+              : 'USE OFFLINE PREVIEW'}
           </button>
 
           <button
             type="button"
+            className="bauhaus-btn-invert"
             onClick={() => {
               setIsRegistering((previous) => !previous);
             }}
             disabled={offlinePreview || registerMutation.isPending}
-            title={offlinePreview ? 'Repository registration requires the API.' : undefined}
-            style={{
-              padding: '7px 14px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-sans)',
-              letterSpacing: '0.06em',
-              background: '#ffffff',
-              color: '#000000',
-              border: '1px solid #ffffff',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              opacity: offlinePreview ? 0.4 : 1,
-            }}
+            title={
+              offlinePreview
+                ? 'Repository registration requires the API.'
+                : undefined
+            }
           >
-            {isRegistering ? 'Close Form' : '+ Register Repo'}
+            {isRegistering ? 'CLOSE FORM' : '+ REGISTER REPO'}
           </button>
         </div>
       </header>
@@ -521,21 +492,73 @@ export default function App() {
 
       {/* MODE NOTICE */}
       <div
+        className="bauhaus-border-b"
         style={{
-          padding: '8px 32px',
-          fontSize: '0.78rem',
-          color: '#666666',
-          backgroundColor: offlinePreview ? '#fffbeb' : '#fafafa',
-          borderBottom: '1px solid #e5e5e5',
+          padding: '12px 24px',
+          fontSize: '0.8rem',
+          lineHeight: 1.6,
+          backgroundColor: offlinePreview ? '#fff4ce' : '#f5f5f5',
         }}
       >
         {offlinePreview
-          ? '⚠ Offline preview — fixture data only. API calls and registration are disabled.'
-          : '◎ API mode — health, registration, and symbol search use live HTTP requests. Dashboard metrics are illustrative fixtures.'}
+          ? 'OFFLINE PREVIEW — the CodeViewer uses local fixture data. API health polling and symbol search are disabled. Registration is unavailable.'
+          : 'API MODE — health, registration, and symbol search use HTTP requests. The current repository endpoints may still return mock responses.'}
+
+        <br />
+
+        Dashboard metrics, repository tree, PR cards, and recommendations
+        below are illustrative fixtures, not measured repository results.
       </div>
 
-      {/* NAVIGATION */}
-      <AppNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* NAVIGATION TABS */}
+      <nav
+        className="bauhaus-border-b"
+        aria-label="Dashboard sections"
+        style={{
+          display: 'flex',
+          backgroundColor: '#ffffff',
+          overflowX: 'auto',
+        }}
+      >
+        {(
+          [
+            'OVERVIEW',
+            'GRAPH',
+            'PR_IMPACT',
+            'RAG',
+            'RECOMMENDATIONS',
+          ] as Tab[]
+        ).map((tab) => {
+          const isActive = activeTab === tab;
+
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              aria-pressed={isActive}
+              className="bauhaus-border-r"
+              style={{
+                padding: '16px 28px',
+                borderTop: 'none',
+                borderBottom: 'none',
+                borderLeft: 'none',
+                backgroundColor: isActive ? '#000000' : '#ffffff',
+                color: isActive ? '#ffffff' : '#000000',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                letterSpacing: '0.12em',
+                cursor: 'pointer',
+                borderRadius: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              [ {tab.replaceAll('_', ' ')} ]
+            </button>
+          );
+        })}
+      </nav>
 
       {/* FIXTURE METRICS */}
       <div
@@ -563,13 +586,11 @@ export default function App() {
           >
             <span
               style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
                 display: 'block',
                 marginBottom: '8px',
-                color: '#555555',
-                textTransform: 'uppercase',
               }}
             >
               {label}
@@ -915,12 +936,29 @@ export default function App() {
         )}
       </main>
 
-      {/* UPGRADED ARCHITECTURAL BAUHAUS FOOTER */}
-      <Footer
-        offlinePreview={offlinePreview}
-        apiHealth={healthData}
-        isHealthError={isHealthError}
-      />
+      {/* FOOTER */}
+      <footer
+        className="bauhaus-border-t"
+        style={{
+          padding: '20px 32px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          backgroundColor: '#000000',
+          color: '#ffffff',
+          fontSize: '0.8rem',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        <div>REPOSCOPE // BAUHAUS DESIGN EDITION</div>
+
+        <div>
+          {offlinePreview
+            ? 'LOCAL FIXTURE PREVIEW // NO BACKEND REQUIRED'
+            : 'API MODE // DATA SOURCES REQUIRE VERIFICATION'}
+        </div>
+      </footer>
     </div>
   );
 }
