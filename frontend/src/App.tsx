@@ -5,8 +5,13 @@ import GlobalSearch from './components/GlobalSearch';
 import CodeViewerDemo from './components/CodeViewerDemo';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
-import Footer from './components/Footer';
-import AppNav, { type Tab } from './components/AppNav';
+
+type Tab =
+  | 'OVERVIEW'
+  | 'GRAPH'
+  | 'PR_IMPACT'
+  | 'RAG'
+  | 'RECOMMENDATIONS';
 
 const API_BASE = 'http://localhost:8000/api';
 
@@ -14,27 +19,6 @@ const mockRepos = [
   {
     id: 1,
     name: 'nishtha911/RepoScope',
-  },
-];
-
-const recentPRImpacts = [
-  {
-    pr: '#42 Refactor resolver.py AST pass',
-    risk: 'LOW (0.04)',
-    blastCount: 14,
-    filesChanged: 3,
-  },
-  {
-    pr: '#41 Upgrade pgvector HNSW index params',
-    risk: 'MED (0.18)',
-    blastCount: 42,
-    filesChanged: 7,
-  },
-  {
-    pr: '#40 Add evidence pack validator',
-    risk: 'LOW (0.01)',
-    blastCount: 6,
-    filesChanged: 2,
   },
 ];
 
@@ -807,59 +791,14 @@ export default function App() {
                     gap: '16px',
                   }}
                 >
-                  {recentPRImpacts.map((item) => (
-                    <div
-                      key={item.pr}
-                      className="bauhaus-border-all"
-                      style={{ padding: '20px' }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          flexWrap: 'wrap',
-                          gap: '12px',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 800,
-                            fontSize: '0.95rem',
-                          }}
-                        >
-                          {item.pr}
-                        </span>
-
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            padding: '4px 10px',
-                            border: '2px solid #000000',
-                          }}
-                        >
-                          EXAMPLE RISK: {item.risk}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '24px',
-                          fontSize: '0.8rem',
-                          fontFamily: 'var(--font-mono)',
-                        }}
-                      >
-                        <span>
-                          AFFECTED SYMBOLS: {item.blastCount}
-                        </span>
-
-                        <span>FILES: {item.filesChanged}</span>
-                      </div>
-                    </div>
+                  {initialAnalysisHistory.slice(0, 3).map((item) => (
+                    <PROverviewCard
+                      key={item.id}
+                      report={item}
+                      title={item.title}
+                      compact
+                      onViewDetails={() => setActiveTab('PR_IMPACT')}
+                    />
                   ))}
                 </div>
 
@@ -937,55 +876,14 @@ export default function App() {
           />
         )}
 
-        {/* PR IMPACT PLACEHOLDER */}
+        {/* PR IMPACT SUBMISSION & BLAST RADIUS VIEW */}
         {activeTab === 'PR_IMPACT' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              PR IMPACT ANALYSIS — UI PREVIEW
-            </h2>
-
-            <div
-              className="bauhaus-border-all"
-              style={{ padding: '28px' }}
-            >
-              <p style={{ marginBottom: '16px' }}>
-                This form is a placeholder. No analysis handler is
-                connected.
-              </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                }}
-              >
-                <input
-                  className="bauhaus-input"
-                  aria-label="Git diff or PR branch"
-                  placeholder="e.g. main...feature/ast-resolver"
-                  style={{ flex: '1 1 260px' }}
-                />
-
-                <button
-                  type="button"
-                  className="bauhaus-btn-invert"
-                  disabled
-                >
-                  CALCULATE BLAST RADIUS — NOT CONNECTED
-                </button>
-              </div>
-            </div>
-          </section>
+          <PRImpactView
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            apiBase={API_BASE}
+            offlinePreview={offlinePreview}
+          />
         )}
 
         {/* RAG CODEBASE CHAT */}
@@ -1002,79 +900,18 @@ export default function App() {
           />
         )}
 
-        {/* SYNTHETIC RECOMMENDATIONS */}
+        {/* WHAT TO WORK ON NEXT RECOMMENDATIONS BOARD */}
         {activeTab === 'RECOMMENDATIONS' && (
-          <section style={{ padding: '32px' }}>
-            <h2
-              className="bauhaus-border-b"
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-              }}
-            >
-              RECOMMENDATIONS — SYNTHETIC EXAMPLES
-            </h2>
-
-            <p style={{ marginBottom: '16px' }}>
-              These cards are static examples, not outputs from a trained
-              ranker or a repository analysis.
-            </p>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
-              <div
-                className="bauhaus-border-all"
-                style={{ padding: '20px' }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    display: 'block',
-                    marginBottom: '6px',
-                  }}
-                >
-                  EXAMPLE PRIORITY #1 // FIXTURE SCORE: 0.94
-                </span>
-
-                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  Add test coverage for{' '}
-                  <code>SymbolResolver.resolve_calls()</code>
-                </h3>
-              </div>
-
-              <div
-                className="bauhaus-border-all"
-                style={{ padding: '20px' }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    display: 'block',
-                    marginBottom: '6px',
-                  }}
-                >
-                  EXAMPLE PRIORITY #2 // FIXTURE SCORE: 0.88
-                </span>
-
-                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  Optimize pgvector HNSW index parameters for large
-                  repositories
-                </h3>
-              </div>
-            </div>
-          </section>
+          <RecommendationsBoard
+            repoId={selectedRepoId}
+            repoName={selectedRepo.name}
+            apiBase={API_BASE}
+            offlinePreview={offlinePreview}
+            onInspectSymbol={(symbolId) => {
+              setInspectedSymbolId(symbolId);
+              setActiveTab('GRAPH');
+            }}
+          />
         )}
       </main>
 

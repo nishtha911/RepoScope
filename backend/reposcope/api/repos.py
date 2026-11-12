@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, HTTPException, Path, Query, status
 
 from reposcope.contracts.api import (
-    AskRequest, AskResponse, FeedbackRequest, FeedbackResponse,
+    AskRequest, AskResponse, AskTimings, FeedbackRequest, FeedbackResponse,
     Neighbor, NeighborsResponse, PRImpactRequest, RecommendationItem,
     RecommendationsResponse, RegisterRepoRequest, RegisterRepoResponse,
     RepositoryResponse, SearchHit, SearchRequest, SearchResponse,
@@ -118,30 +118,41 @@ def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
             evidence_id="E1", snapshot_id=1, file_id=12,
             file_path="backend/reposcope/parsing/resolver.py", symbol_id=101, chunk_id=5,
             start_line=142, end_line=160, text="def resolve_calls(self, ast_tree): ...",
-        )], gaps=[],
+        )],
+        gaps=[],
+        timings=AskTimings(retrieval_ms=38, expansion_ms=14, synthesis_ms=112),
     )
 
 
 @router.post("/repos/{repo_id}/pr-impact", response_model=PRImpactReport)
 def pr_impact(repo_id: PathID, payload: PRImpactRequest) -> PRImpactReport:
+    if payload.patch and not payload.pr_url:
+        line_count = len(payload.patch.splitlines())
+        return PRImpactReport(
+            pr_url=None,
+            patch_name="Pasted Git Patch",
+            risk_level="MEDIUM" if line_count > 50 else "LOW",
+            risk_score=min(round(0.02 + line_count * 0.003, 2), 0.75),
+            files_changed_count=max(payload.patch.count("diff --git"), 1),
+            impacted_symbols_count=max(payload.patch.count("def ") + payload.patch.count("class "), 4),
+            affected_endpoints_count=payload.patch.count("@router") + payload.patch.count("@app"),
+            impacted_tests_count=1 if "test" in payload.patch.lower() else 0,
+            summary=f"Analysis of raw patch ({line_count} lines): modifications scanned across local AST graph.",
+        )
+
     return PRImpactReport(
-        pr_url=payload.pr_url, risk_level="LOW", risk_score=0.04,
-        files_changed_count=3, impacted_symbols_count=14,
-        affected_endpoints_count=0, impacted_tests_count=2,
+        pr_url=payload.pr_url,
+        patch_name=None,
+        risk_level="LOW",
+        risk_score=0.04,
+        files_changed_count=3,
+        impacted_symbols_count=14,
+        affected_endpoints_count=0,
+        impacted_tests_count=2,
         summary="Modifies internal helper methods in resolver.py without API signature breaking changes.",
     )
 
 
-@router.get("/repos/{repo_id}/recommendations", response_model=RecommendationsResponse)
-def get_recommendations(
-    repo_id: PathID, k: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> RecommendationsResponse:
-    items = [RecommendationItem(
-        id=1, snapshot_id=1, symbol_id=101, category="UNTESTED_HOTSPOT",
-        title="Add unit test for SymbolResolver.resolve_calls",
-        description="High fan-in symbol lacks direct unit test coverage.", score=0.94, confidence=0.9,
-    )]
-    return RecommendationsResponse(recommendations=items[:k])
 
 
 @router.get("/symbols/{symbol_id}", response_model=SymbolDetailResponse)

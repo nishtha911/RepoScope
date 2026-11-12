@@ -1,0 +1,758 @@
+/* PR Impact Submission & Analysis View - Bauhaus Theme */
+
+.pr-impact-view {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  color: #000000;
+  width: 100%;
+}
+
+/* Header */
+.pr-impact-view__header {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color: #fafafa;
+}
+
+.pr-impact-view__title {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #000000;
+  margin: 0;
+}
+
+.pr-impact-view__desc {
+  font-size: 0.82rem;
+  color: #475569;
+  margin-top: 6px;
+  max-width: 800px;
+  line-height: 1.5;
+}
+
+.pr-impact-view__mode-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.pr-impact-view__mode-badge--offline {
+  background-color: #d97706;
+}
+
+.pr-impact-view__repo-info {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #334155;
+  background-color: #f1f5f9;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Submit Card */
+.pr-impact-view__submit-card {
+  padding: 24px 32px;
+  background-color: #ffffff;
+}
+
+.pr-impact-view__tab-bar {
+  display: flex;
+  border-bottom: 2px solid #000000;
+  margin-bottom: 20px;
+}
+
+.pr-impact-view__tab-btn {
+  padding: 10px 20px;
+  border: none;
+  border-right: 2px solid #000000;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pr-impact-view__tab-btn--active {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.pr-impact-view__tab-btn:hover:not(.pr-impact-view__tab-btn--active) {
+  background-color: #e2e8f0;
+  color: #000000;
+}
+
+.pr-impact-view__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pr-impact-view__input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pr-impact-view__label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #000000;
+}
+
+.pr-impact-view__text-input {
+  flex: 1 1 320px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+}
+
+.pr-impact-view__textarea {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre;
+  resize: vertical;
+}
+
+.pr-impact-view__submit-btn {
+  padding: 10px 20px;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.pr-impact-view__samples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pr-impact-view__samples-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.pr-impact-view__sample-chip {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pr-impact-view__sample-chip:hover {
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+.pr-impact-view__error {
+  padding: 10px 14px;
+  background-color: #fee2e2;
+  border: 1.5px solid #ef4444;
+  color: #991b1b;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Active Report Card Container */
+.pr-impact-view__report-container {
+  padding: 24px 32px;
+  background-color: #fafbfc;
+}
+
+.pr-impact-view__report-card {
+  padding: 24px 32px;
+  background-color: #fafbfc;
+}
+
+.pr-impact-view__report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pr-impact-view__report-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.pr-impact-view__report-title {
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #000000;
+  margin: 0;
+}
+
+.pr-impact-view__risk-score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.pr-impact-view__risk-score-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.pr-impact-view__risk-score-val {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #000000;
+}
+
+/* Risk Badges */
+.pr-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border: 1.5px solid #000000;
+}
+
+.pr-risk-badge--low {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-color: #15803d;
+}
+
+.pr-risk-badge--medium {
+  background-color: #fef9c3;
+  color: #a16207;
+  border-color: #a16207;
+}
+
+.pr-risk-badge--high {
+  background-color: #ffedd5;
+  color: #c2410c;
+  border-color: #c2410c;
+}
+
+.pr-risk-badge--critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Metrics Grid */
+.pr-impact-view__metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pr-impact-view__metric-box {
+  padding: 16px;
+  background-color: #ffffff;
+  border: 2px solid #000000;
+}
+
+.pr-impact-view__metric-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.pr-impact-view__metric-val {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #000000;
+}
+
+.pr-impact-view__summary-box {
+  padding: 14px 18px;
+  background-color: #ffffff;
+  border-left: 4px solid #2563eb;
+  border-top: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* History Section */
+.pr-impact-view__history-section {
+  padding: 24px 32px;
+  background-color: #ffffff;
+}
+
+.pr-impact-view__history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.pr-impact-view__history-title {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.pr-impact-view__history-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.pr-impact-view__table-wrap {
+  overflow-x: auto;
+  border: 2px solid #000000;
+}
+
+.pr-impact-view__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.pr-impact-view__table th {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid #000000;
+  white-space: nowrap;
+}
+
+.pr-impact-view__table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.pr-impact-view__table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.pr-impact-view__row--selected {
+  background-color: #f1f5f9;
+  border-left: 4px solid #000000;
+}
+
+.pr-impact-view__table-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pr-impact-view__table-url {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.pr-impact-view__type-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  background-color: #e2e8f0;
+  color: #334155;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+/* ========================================================================= */
+/* DOWNSTREAM TARGETS: IMPACTED TESTS & ENDPOINTS DETAILS (DAY 14 TRACK 3)  */
+/* ========================================================================= */
+
+.pr-impact-view__details-section {
+  padding: 24px 32px;
+  background-color: #f8fafc;
+}
+
+.pr-impact-view__details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pr-impact-view__details-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.pr-impact-view__details-title {
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Feedback Action Bar */
+.pr-impact-view__feedback-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pr-impact-view__feedback-status {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+}
+
+.pr-impact-view__feedback-status--pending {
+  color: #475569;
+  border-color: #94a3b8;
+}
+
+.pr-impact-view__feedback-status--accepted {
+  color: #166534;
+  background-color: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.pr-impact-view__feedback-status--dismissed {
+  color: #64748b;
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pr-impact-view__feedback-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pr-impact-view__feedback-btn {
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pr-impact-view__feedback-btn--active {
+  background-color: #166534 !important;
+  color: #ffffff !important;
+  border-color: #166534 !important;
+}
+
+.pr-impact-view__feedback-btn--dismissed {
+  background-color: #64748b !important;
+  color: #ffffff !important;
+  border-color: #64748b !important;
+}
+
+/* 3-Column Grid */
+.pr-impact-view__details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .pr-impact-view__details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pr-impact-view__details-card {
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pr-impact-view__card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.pr-impact-view__card-title {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #000000;
+  margin: 0;
+}
+
+.pr-impact-view__card-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.pr-impact-view__card-count--warning {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.pr-impact-view__card-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0 0 14px 0;
+  line-height: 1.4;
+}
+
+.pr-impact-view__empty-box {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  padding: 16px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: auto;
+}
+
+.pr-impact-view__empty-box--ok {
+  background-color: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
+  font-weight: 600;
+}
+
+.pr-impact-view__items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+/* Endpoint Item */
+.pr-impact-view__endpoint-row {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 10px 12px;
+  border-left: 3px solid #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-impact-view__endpoint-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pr-impact-view__method-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.pr-impact-view__method-badge--get {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.pr-impact-view__method-badge--post {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.pr-impact-view__method-badge--delete {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.pr-impact-view__method-badge--put,
+.pr-impact-view__method-badge--patch {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.pr-impact-view__route-code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pr-impact-view__endpoint-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.pr-impact-view__handler-name {
+  font-family: var(--font-mono);
+  color: #334155;
+}
+
+.pr-impact-view__confidence-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 1px 5px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Test Item */
+.pr-impact-view__test-row {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 10px 12px;
+  border-left: 3px solid #2563eb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-impact-view__test-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pr-impact-view__test-icon {
+  font-size: 0.75rem;
+  color: #2563eb;
+}
+
+.pr-impact-view__test-name {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pr-impact-view__test-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #64748b;
+  gap: 8px;
+}
+
+.pr-impact-view__file-path {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Missing Test (Test Gap) Item */
+.pr-impact-view__missing-row {
+  border: 1px solid #fecaca;
+  background-color: #fffaf0;
+  padding: 10px 12px;
+  border-left: 3px solid #dc2626;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pr-impact-view__missing-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pr-impact-view__gap-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+
+.pr-impact-view__symbol-name {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #991b1b;
+}
+
+.pr-impact-view__missing-reason {
+  font-size: 0.72rem;
+  color: #7f1d1d;
+  margin: 0;
+  line-height: 1.35;
+}
+
+

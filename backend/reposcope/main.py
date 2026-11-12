@@ -75,3 +75,6 @@ from reposcope.api import repos
 
 app.include_router(health.router, prefix="/api")
 app.include_router(repos.router, prefix="/api")
+
+from reposcope.api import recommendations
+app.include_router(recommendations.router, prefix="/api")

@@ -1,0 +1,507 @@
+/* RecommendationsBoard.css - Bauhaus What to Work on Next Action Board */
+
+.rec-board {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  color: #000000;
+  width: 100%;
+}
+
+/* Header Section */
+.rec-board__header {
+  padding: 24px 32px;
+  background-color: #fafbfc;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.rec-board__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+}
+
+.rec-board__kicker {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.rec-board__title {
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: #000000;
+  line-height: 1.25;
+}
+
+.rec-board__desc {
+  font-family: var(--font-body, 'Space Grotesk', sans-serif);
+  font-size: 0.88rem;
+  color: #334155;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.rec-board__meta-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.rec-board__mode-badge {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border: 1.5px solid #000000;
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.rec-board__mode-badge--offline {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #d97706;
+}
+
+.rec-board__repo-info {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Filter Bar */
+.rec-board__filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 32px;
+  background-color: #ffffff;
+}
+
+.rec-board__filter-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rec-board__filter-chip {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
+  border: 2px solid #000000;
+  background-color: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.rec-board__filter-chip:hover:not(.rec-board__filter-chip--active) {
+  background-color: #f1f5f9;
+}
+
+.rec-board__filter-chip--active {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.rec-board__count-pill {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* Main Content Area */
+.rec-board__content {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Loading & Empty & Error States */
+.rec-board__state-box {
+  padding: 48px 24px;
+  text-align: center;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-board__error-box {
+  background-color: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #991b1b;
+  padding: 20px;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.85rem;
+}
+
+/* Card List */
+.rec-board__list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Individual Recommendation Card */
+.rec-card {
+  background-color: #ffffff;
+  border: 3px solid #000000;
+  box-shadow: 4px 4px 0 #000000;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.rec-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 #000000;
+}
+
+/* Card Header */
+.rec-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 12px;
+}
+
+.rec-card__header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rec-card__rank-badge {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.85rem;
+  font-weight: 900;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 4px 8px;
+  border: 1px solid #000000;
+  line-height: 1;
+}
+
+/* Category Tags */
+.rec-cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border: 1.5px solid #000000;
+  text-transform: uppercase;
+}
+
+.rec-cat-tag--untested {
+  background-color: #ede9fe;
+  color: #5b21b6;
+  border-color: #7c3aed;
+}
+
+.rec-cat-tag--complexity {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #d97706;
+}
+
+.rec-cat-tag--docgap {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #0284c7;
+}
+
+.rec-cat-tag--default {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+/* Impact Badges */
+.rec-impact-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border: 1.5px solid #000000;
+  text-transform: uppercase;
+}
+
+.rec-impact-badge--critical {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #dc2626;
+}
+
+.rec-impact-badge--high {
+  background-color: #ffedd5;
+  color: #c2410c;
+  border-color: #ea580c;
+}
+
+.rec-impact-badge--medium {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border-color: #ca8a04;
+}
+
+.rec-impact-badge--low {
+  background-color: #dcfce7;
+  color: #166534;
+  border-color: #16a34a;
+}
+
+/* Score Block */
+.rec-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-card__score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rec-card__score-label {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.rec-card__score-val {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1;
+}
+
+/* Card Body */
+.rec-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-card__title {
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0;
+  color: #000000;
+  line-height: 1.35;
+}
+
+.rec-card__desc {
+  font-family: var(--font-body, 'Space Grotesk', sans-serif);
+  font-size: 0.85rem;
+  color: #334155;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Location Badge */
+.rec-card__location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.74rem;
+  color: #475569;
+  background-color: #f8fafc;
+  padding: 4px 8px;
+  border-left: 3px solid #000000;
+  width: fit-content;
+}
+
+/* Feature Metrics Bar */
+.rec-card__metrics-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  color: #475569;
+  padding-top: 4px;
+}
+
+.rec-card__metric-token {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rec-card__metric-name {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.rec-card__metric-val {
+  color: #000000;
+  font-weight: 900;
+}
+
+/* Rationale Dropdown Section */
+.rec-card__rationale-wrap {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 12px;
+}
+
+.rec-card__dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: 1px solid #000000;
+  padding: 8px 12px;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #000000;
+  cursor: pointer;
+  background-color: #f8fafc;
+  transition: all 0.15s ease;
+}
+
+.rec-card__dropdown-toggle:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.rec-card__dropdown-panel {
+  margin-top: 8px;
+  background-color: #f1f5f9;
+  border: 1.5px solid #000000;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: recDropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes recDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rec-card__rationale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rec-card__rationale-source {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border: 1px solid #000000;
+}
+
+.rec-card__rationale-source--llm {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.rec-card__rationale-source--deterministic {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.rec-card__rationale-text {
+  font-family: var(--font-body, 'Space Grotesk', sans-serif);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Citations strip */
+.rec-card__citations-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rec-card__citations-label {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.rec-card__citation-pill {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 800;
+  background-color: #ffffff;
+  border: 1px solid #94a3b8;
+  padding: 2px 6px;
+  color: #1e293b;
+}
+
+.rec-card__panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.rec-card__inspect-btn {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 12px;
+}
+

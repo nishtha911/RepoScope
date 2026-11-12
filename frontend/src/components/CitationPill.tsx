@@ -1,20 +1,36 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type React from 'react';
 import type { CitationEvidence } from '../types/chat';
+import { isEvidenceId } from '../types/evidence';
+import './CitationDrawer.css';
 import './CitationPill.css';
 
-interface Props {
+interface DrawerCitationPillProps {
+  evidenceId: string;
+  onSelect: (id: string) => void;
+  expanded?: boolean;
+  controls?: string;
+}
+function DrawerCitationPill({ evidenceId, onSelect, expanded = false, controls }: DrawerCitationPillProps) {
+  return <button type="button" className="citation-drawer-pill" disabled={!isEvidenceId(evidenceId)}
+    aria-label={`Open citation ${evidenceId}`} aria-haspopup="dialog"
+    aria-expanded={expanded} aria-controls={controls}
+    onClick={event => { event.currentTarget.focus(); onSelect(evidenceId); }}>[{evidenceId}]</button>;
+}
+
+interface ChatCitationPillProps {
   evidenceId: string;
   evidence?: CitationEvidence;
   onSelectSymbol?: (symbolId: number) => void;
 }
 
-export const CitationPill: React.FC<Props> = ({
+const ChatCitationPill: React.FC<ChatCitationPillProps> = ({
   evidenceId,
   evidence,
   onSelectSymbol,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
 
   // Close on outside click
   useEffect(() => {
@@ -153,5 +169,15 @@ export const CitationPill: React.FC<Props> = ({
     </span>
   );
 };
+
+/** Preserve both caller contracts without duplicate component declarations. */
+export type CitationPillProps = DrawerCitationPillProps | ChatCitationPillProps;
+
+export function CitationPill(props: CitationPillProps) {
+  if ('onSelect' in props) {
+    return <DrawerCitationPill {...props} />;
+  }
+  return <ChatCitationPill {...props} />;
+}
 
 export default CitationPill;
