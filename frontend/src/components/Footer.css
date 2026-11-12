@@ -1,6 +1,9 @@
+/* Footer - Clean Bauhaus Aesthetic */
+
 .site-footer {
-  border-top: 3px solid #000000;
-  background-color: #ffffff;
+  border-top: var(--border-thin);
+  background-color: #000000;
+  color: #ffffff;
   margin-top: auto;
 }
 
@@ -8,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 32px;
+  padding: 16px 32px;
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -22,16 +25,16 @@
 
 .site-footer__logo {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: #000000;
+  color: #ffffff;
 }
 
 .site-footer__copy {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #888888;
+  color: #a3a3a3;
 }
 
 /* Right side */
@@ -44,7 +47,7 @@
 .site-footer__status-text {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #555555;
+  color: #e5e5e5;
 }
 
 /* Status dots */
@@ -52,18 +55,18 @@
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   flex-shrink: 0;
 }
 
 .footer__dot--online {
-  background-color: #16a34a;
+  background-color: #22c55e;
 }
 
 .footer__dot--offline {
-  background-color: #d97706;
+  background-color: #facc15;
 }
 
 .footer__dot--error {
-  background-color: #dc2626;
+  background-color: #ef4444;
 }

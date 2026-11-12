@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import GlobalSearch from './components/GlobalSearch';
@@ -8,7 +8,9 @@ import CodebaseChat from './components/CodebaseChat';
 import PRImpactView from './components/PRImpactView';
 import PROverviewCard from './components/PROverviewCard';
 import RecommendationsBoard from './components/RecommendationsBoard';
+import Footer from './components/Footer';
 import { initialAnalysisHistory } from './fixtures/prImpact';
+import './App.css';
 
 type Tab =
   | 'OVERVIEW'
@@ -77,7 +79,6 @@ async function registerRepo(url: string) {
 
 export default function App() {
   const [offlinePreview, setOfflinePreview] = useState(true);
-
   const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
   const [selectedRepoId, setSelectedRepoId] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +86,28 @@ export default function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
   const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
+
+  // Keyboard navigation: ⌘K or / to search, 1-5 for tab jumping
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        document.getElementById('header-global-search')?.focus();
+      } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        document.getElementById('header-global-search')?.focus();
+      } else if (!e.metaKey && !e.ctrlKey && !e.altKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (e.key === '1') setActiveTab('OVERVIEW');
+        if (e.key === '2') setActiveTab('GRAPH');
+        if (e.key === '3') setActiveTab('PR_IMPACT');
+        if (e.key === '4') setActiveTab('RAG');
+        if (e.key === '5') setActiveTab('RECOMMENDATIONS');
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const selectedRepo =
     mockRepos.find((repo) => repo.id === selectedRepoId) ??
@@ -137,133 +160,48 @@ export default function App() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#ffffff',
-        color: '#000000',
-      }}
-    >
+    <div className="bauhaus-shell">
       {/* TOP HEADER */}
-      <header
-        className="bauhaus-border-b"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'stretch',
-          backgroundColor: '#ffffff',
-        }}
-      >
-        <div
-          className="bauhaus-border-r"
-          style={{
-            padding: '16px 32px',
-            backgroundColor: '#000000',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '18px',
-          }}
-        >
+      <header className="bauhaus-header">
+        {/* Brand Block */}
+        <div className="bauhaus-brand">
           <img
             src="/image.png"
             alt="RepoScope Logo"
-            style={{
-              width: '54px',
-              height: '54px',
-              objectFit: 'contain',
-              border: '2px solid #ffffff',
-              backgroundColor: '#ffffff',
-              padding: '2px',
-            }}
+            className="bauhaus-logo"
           />
-
-          <span
-            style={{
-              fontSize: '1.6rem',
-              fontWeight: 800,
-              letterSpacing: '0.14em',
-            }}
-          >
-            REPOSCOPE
-          </span>
+          <span className="bauhaus-brand__title">REPOSCOPE</span>
         </div>
 
-        <div
-          className="bauhaus-border-r"
-          style={{
-            padding: '16px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
+        {/* System Status */}
+        <div className="bauhaus-cell">
+          <span className="bauhaus-cell__label">SYSTEM STATUS</span>
           <span
+            className="bauhaus-cell__value"
             style={{
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-            }}
-          >
-            SYSTEM STATUS
-          </span>
-
-          <span
-            style={{
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              marginTop: '4px',
-              color:
-                !offlinePreview && isHealthError
-                  ? '#b91c1c'
-                  : '#000000',
+              color: !offlinePreview && isHealthError
+                ? 'var(--bauhaus-red)'
+                : '#000000',
             }}
           >
             {systemStatus}
           </span>
         </div>
 
-        <div
-          className="bauhaus-border-r"
-          style={{
-            padding: '16px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            minWidth: '220px',
-          }}
-        >
-          <label
-            htmlFor="target-repository"
-            style={{
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              letterSpacing: '0.15em',
-            }}
-          >
+        {/* Target Repository */}
+        <div className="bauhaus-cell" style={{ minWidth: '220px' }}>
+          <label htmlFor="target-repository" className="bauhaus-cell__label">
             TARGET REPOSITORY
           </label>
 
           <select
             id="target-repository"
+            className="bauhaus-select"
             value={selectedRepoId}
             onChange={(event) => {
               setSelectedRepoId(Number(event.target.value));
               setSearchQuery('');
               setSearchLatencyMs(null);
-            }}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              fontSize: '1rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-sans)',
-              cursor: 'pointer',
-              marginTop: '4px',
             }}
           >
             {mockRepos.map((repo) => (
@@ -274,17 +212,8 @@ export default function App() {
           </select>
         </div>
 
-        <div
-          className="bauhaus-border-r"
-          style={{
-            padding: '12px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            flexGrow: 1,
-            minWidth: '260px',
-          }}
-        >
+        {/* Global Search */}
+        <div className="bauhaus-search-cell">
           <div
             style={{
               display: 'flex',
@@ -294,11 +223,7 @@ export default function App() {
           >
             <label
               htmlFor="header-global-search"
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-              }}
+              className="bauhaus-cell__label"
             >
               GLOBAL SEARCH
             </label>
@@ -306,10 +231,10 @@ export default function App() {
             {searchLatencyMs !== null && (
               <span
                 style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-mono)',
-                  color: '#2563eb',
+                  color: 'var(--bauhaus-blue)',
                 }}
               >
                 ⚡ {searchLatencyMs}ms
@@ -319,7 +244,7 @@ export default function App() {
 
           <input
             id="header-global-search"
-            className="bauhaus-input"
+            className="bauhaus-input bauhaus-search-input"
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -329,23 +254,11 @@ export default function App() {
               }
             }}
             placeholder="Search symbols, routes, docs…"
-            style={{
-              marginTop: '4px',
-              padding: '6px 10px',
-              fontSize: '0.85rem',
-            }}
           />
         </div>
 
-        <div
-          style={{
-            padding: '16px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}
-        >
+        {/* Actions */}
+        <div className="bauhaus-actions-cell">
           <button
             type="button"
             className="bauhaus-btn-invert"
@@ -375,14 +288,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* REPOSITORY REGISTRATION: API MODE ONLY */}
+      {/* REPOSITORY REGISTRATION FORM: API MODE ONLY */}
       {!offlinePreview && isRegistering && (
         <section
           className="bauhaus-border-b"
           aria-labelledby="register-repository-heading"
           style={{
             padding: '24px 32px',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: 'var(--bg-subtle)',
           }}
         >
           <div
@@ -400,7 +313,7 @@ export default function App() {
               style={{
                 fontSize: '1rem',
                 fontWeight: 800,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
               }}
             >
               REGISTER NEW REPOSITORY
@@ -408,12 +321,12 @@ export default function App() {
 
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 800,
                 padding: '4px 12px',
                 backgroundColor: registerMutation.isPending
                   ? '#000000'
-                  : '#e2e8f0',
+                  : '#e5e5e5',
                 color: registerMutation.isPending
                   ? '#ffffff'
                   : '#000000',
@@ -426,7 +339,13 @@ export default function App() {
             </span>
           </div>
 
-          <p style={{ fontSize: '0.85rem', marginBottom: '12px' }}>
+          <p
+            style={{
+              fontSize: '0.85rem',
+              color: 'var(--text-secondary)',
+              marginBottom: '12px',
+            }}
+          >
             This sends a request to the configured API. A successful
             registration response does not prove that cloning or indexing
             has completed.
@@ -470,7 +389,14 @@ export default function App() {
           </form>
 
           {registerMutation.isPending && (
-            <p role="status" style={{ marginTop: '12px' }}>
+            <p
+              role="status"
+              style={{
+                marginTop: '12px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.82rem',
+              }}
+            >
               Waiting for the registration response...
             </p>
           )}
@@ -479,7 +405,7 @@ export default function App() {
             <p
               role="alert"
               style={{
-                color: '#b91c1c',
+                color: 'var(--bauhaus-red)',
                 marginTop: '12px',
                 fontSize: '0.85rem',
               }}
@@ -490,35 +416,32 @@ export default function App() {
         </section>
       )}
 
-      {/* MODE NOTICE */}
+      {/* MODE NOTICE BANNER */}
       <div
-        className="bauhaus-border-b"
-        style={{
-          padding: '12px 24px',
-          fontSize: '0.8rem',
-          lineHeight: 1.6,
-          backgroundColor: offlinePreview ? '#fff4ce' : '#f5f5f5',
-        }}
+        className={`bauhaus-notice-banner ${
+          offlinePreview
+            ? 'bauhaus-notice-banner--offline'
+            : 'bauhaus-notice-banner--api'
+        }`}
       >
-        {offlinePreview
-          ? 'OFFLINE PREVIEW — the CodeViewer uses local fixture data. API health polling and symbol search are disabled. Registration is unavailable.'
-          : 'API MODE — health, registration, and symbol search use HTTP requests. The current repository endpoints may still return mock responses.'}
-
-        <br />
-
-        Dashboard metrics, repository tree, PR cards, and recommendations
-        below are illustrative fixtures, not measured repository results.
+        <div>
+          <strong>
+            {offlinePreview ? 'OFFLINE PREVIEW — ' : 'API MODE — '}
+          </strong>
+          {offlinePreview
+            ? 'the CodeViewer uses local fixture data. API health polling and symbol search are disabled. Registration is unavailable.'
+            : 'health, registration, and symbol search use HTTP requests. The current repository endpoints may still return mock responses.'}
+        </div>
+        <div style={{ fontSize: '0.72rem', opacity: 0.85 }}>
+          Dashboard metrics, repository tree, PR cards, and recommendations
+          below are illustrative fixtures, not measured repository results.
+        </div>
       </div>
 
       {/* NAVIGATION TABS */}
       <nav
-        className="bauhaus-border-b"
+        className="bauhaus-nav"
         aria-label="Dashboard sections"
-        style={{
-          display: 'flex',
-          backgroundColor: '#ffffff',
-          overflowX: 'auto',
-        }}
       >
         {(
           [
@@ -537,22 +460,9 @@ export default function App() {
               type="button"
               onClick={() => setActiveTab(tab)}
               aria-pressed={isActive}
-              className="bauhaus-border-r"
-              style={{
-                padding: '16px 28px',
-                borderTop: 'none',
-                borderBottom: 'none',
-                borderLeft: 'none',
-                backgroundColor: isActive ? '#000000' : '#ffffff',
-                color: isActive ? '#ffffff' : '#000000',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                letterSpacing: '0.12em',
-                cursor: 'pointer',
-                borderRadius: 0,
-                whiteSpace: 'nowrap',
-              }}
+              className={`bauhaus-tab-btn ${
+                isActive ? 'bauhaus-tab-btn--active' : ''
+              }`}
             >
               [ {tab.replaceAll('_', ' ')} ]
             </button>
@@ -560,14 +470,8 @@ export default function App() {
         })}
       </nav>
 
-      {/* FIXTURE METRICS */}
-      <div
-        className="bauhaus-border-b"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        }}
-      >
+      {/* METRICS STRIP */}
+      <div className="bauhaus-metrics-grid">
         {[
           ['INGESTED SYMBOLS — EXAMPLE', '3,412'],
           ['AST GRAPH EDGES — EXAMPLE', '14,890'],
@@ -579,61 +483,25 @@ export default function App() {
           ],
           ['AVG PR BLAST RADIUS — EXAMPLE', '0.04'],
         ].map(([label, value]) => (
-          <div
-            key={label}
-            className="bauhaus-border-r"
-            style={{ padding: '24px' }}
-          >
-            <span
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                display: 'block',
-                marginBottom: '8px',
-              }}
-            >
-              {label}
-            </span>
-
-            <span
-              style={{
-                fontSize: '2.5rem',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {value}
-            </span>
+          <div key={label} className="bauhaus-metric-cell">
+            <span className="bauhaus-metric-label">{label}</span>
+            <span className="bauhaus-metric-value">{value}</span>
           </div>
         ))}
       </div>
 
       {/* MAIN DASHBOARD */}
-      <main
-        style={{
-          flex: 1,
-          padding: 0,
-          backgroundColor: '#ffffff',
-        }}
-      >
+      <main className="bauhaus-main">
         {activeTab === 'OVERVIEW' && (
           <>
             {/* Independent of symbol search and backend availability. */}
             <CodeViewerDemo />
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns:
-                  'repeat(auto-fit, minmax(min(100%, 350px), 1fr))',
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="bauhaus-overview-layout">
               {/* LEFT COLUMN */}
               <div
-                className="bauhaus-border-r"
-                style={{ padding: '32px', minWidth: 0 }}
+                className="bauhaus-panel-col"
+                style={{ borderRight: 'var(--border-thin)' }}
               >
                 <GlobalSearch
                   key={`${selectedRepoId}-${offlinePreview}`}
@@ -652,157 +520,65 @@ export default function App() {
 
                 {/* ILLUSTRATIVE FILE TREE */}
                 <section style={{ marginTop: '36px' }}>
-                  <div
-                    className="bauhaus-border-b"
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '12px',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    <h2
-                      style={{
-                        fontSize: '1.1rem',
-                        fontWeight: 800,
-                        letterSpacing: '0.08em',
-                        paddingBottom: '8px',
-                      }}
-                    >
+                  <div className="bauhaus-section-header">
+                    <h2 className="bauhaus-section-title">
                       REPOSITORY FILE TREE
                     </h2>
 
-                    <span
-                      style={{
-                        fontSize: '0.75rem',
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: 700,
-                      }}
-                    >
-                      STATIC EXAMPLE
-                    </span>
+                    <span className="bauhaus-badge">STATIC EXAMPLE</span>
                   </div>
 
-                  <pre
-                    className="bauhaus-border-all"
-                    style={{
-                      margin: 0,
-                      padding: '16px',
-                      backgroundColor: '#fafafa',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.85rem',
-                      lineHeight: 1.7,
-                      overflowX: 'auto',
-                    }}
-                  >
+                  <pre className="bauhaus-code-box">
                     {mockFileTree}
                   </pre>
                 </section>
 
                 {/* PLANNED ARCHITECTURE */}
                 <section style={{ marginTop: '36px' }}>
-                  <h2
-                    className="bauhaus-border-b"
-                    style={{
-                      fontSize: '1.1rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.08em',
-                      marginBottom: '16px',
-                      paddingBottom: '8px',
-                    }}
-                  >
-                    PLANNED PIPELINE ARCHITECTURE
-                  </h2>
+                  <div className="bauhaus-section-header">
+                    <h2 className="bauhaus-section-title">
+                      PLANNED PIPELINE ARCHITECTURE
+                    </h2>
+                  </div>
 
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns:
-                        'repeat(auto-fit, minmax(180px, 1fr))',
-                      gap: '12px',
-                    }}
-                  >
+                  <div className="bauhaus-pipeline-grid">
                     {[
                       ['PASS 1', 'Tree-sitter AST Symbol Table'],
                       ['PASS 2', 'Scoped Call & Import Resolver'],
                       ['RETRIEVAL', 'RRF Vector + Lexical Search'],
                       ['ANSWERING', 'Evidence-Cited GraphRAG'],
-                    ].map(([label, description], index) => (
-                      <div
-                        key={label}
-                        className="bauhaus-border-all"
-                        style={{
-                          padding: '16px',
-                          backgroundColor:
-                            index === 0 || index === 3
-                              ? '#000000'
-                              : '#ffffff',
-                          color:
-                            index === 0 || index === 3
-                              ? '#ffffff'
-                              : '#000000',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            letterSpacing: '0.15em',
-                          }}
+                    ].map(([label, description], index) => {
+                      const isDark = index === 0 || index === 3;
+                      return (
+                        <div
+                          key={label}
+                          className={`bauhaus-pipeline-card ${
+                            isDark
+                              ? 'bauhaus-pipeline-card--dark'
+                              : 'bauhaus-pipeline-card--light'
+                          }`}
                         >
-                          {label}
-                        </span>
-
-                        <p
-                          style={{
-                            fontSize: '0.9rem',
-                            fontWeight: 700,
-                            marginTop: '4px',
-                          }}
-                        >
-                          {description}
-                        </p>
-                      </div>
-                    ))}
+                          <span className="bauhaus-pipeline-phase">
+                            {label}
+                          </span>
+                          <p className="bauhaus-pipeline-desc">
+                            {description}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </section>
               </div>
 
               {/* RIGHT COLUMN */}
-              <div style={{ padding: '32px', minWidth: 0 }}>
-                <div
-                  className="bauhaus-border-b"
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    marginBottom: '20px',
-                  }}
-                >
-                  <h2
-                    style={{
-                      fontSize: '1.1rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.08em',
-                      paddingBottom: '12px',
-                    }}
-                  >
+              <div className="bauhaus-panel-col">
+                <div className="bauhaus-section-header">
+                  <h2 className="bauhaus-section-title">
                     PR IMPACT — EXAMPLE REPORTS
                   </h2>
 
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    3 SYNTHETIC EXAMPLES
-                  </span>
+                  <span className="bauhaus-badge">3 SYNTHETIC EXAMPLES</span>
                 </div>
 
                 <div
@@ -823,58 +599,31 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Honest local preview status, not simulated server logs. */}
+                {/* Honest local preview status */}
                 <section style={{ marginTop: '36px' }}>
-                  <h2
-                    className="bauhaus-border-b"
-                    style={{
-                      fontSize: '1.1rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.1em',
-                      marginBottom: '16px',
-                      paddingBottom: '8px',
-                    }}
-                  >
-                    PREVIEW STATUS
-                  </h2>
+                  <div className="bauhaus-section-header">
+                    <h2 className="bauhaus-section-title">
+                      PREVIEW STATUS
+                    </h2>
+                  </div>
 
-                  <div
-                    className="bauhaus-border-all"
-                    style={{
-                      padding: '16px',
-                      backgroundColor: '#000000',
-                      color: '#ffffff',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.8rem',
-                      lineHeight: 1.8,
-                      overflowWrap: 'anywhere',
-                    }}
-                  >
+                  <div className="bauhaus-status-console">
                     <div>
                       MODE: {offlinePreview ? 'OFFLINE FIXTURE' : 'API'}
                     </div>
-
-                    <div>
-                      CODE PREVIEW: local synthetic fixture
-                    </div>
-
+                    <div>CODE PREVIEW: local synthetic fixture</div>
                     <div>
                       HEALTH POLLING:{' '}
                       {offlinePreview ? 'disabled' : 'enabled'}
                     </div>
-
                     <div>
                       GLOBAL SEARCH:{' '}
                       {offlinePreview
                         ? 'offline fixture preview mode'
                         : 'live POST /api/repos/{id}/search'}
                     </div>
-
-                    <div>
-                      REPOSITORY INGESTION: not verified
-                    </div>
-
-                    <div>
+                    <div>REPOSITORY INGESTION: not verified</div>
+                    <div style={{ marginTop: '8px', opacity: 0.75 }}>
                       Dashboard fixtures are not backend telemetry.
                     </div>
                   </div>
@@ -937,28 +686,13 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer
-        className="bauhaus-border-t"
-        style={{
-          padding: '20px 32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          backgroundColor: '#000000',
-          color: '#ffffff',
-          fontSize: '0.8rem',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        <div>REPOSCOPE // BAUHAUS DESIGN EDITION</div>
-
-        <div>
-          {offlinePreview
-            ? 'LOCAL FIXTURE PREVIEW // NO BACKEND REQUIRED'
-            : 'API MODE // DATA SOURCES REQUIRE VERIFICATION'}
-        </div>
-      </footer>
+      <Footer
+        offlinePreview={offlinePreview}
+        apiHealth={healthData}
+        isHealthError={isHealthError}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
     </div>
   );
 }
