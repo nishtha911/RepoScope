@@ -3,6 +3,10 @@ import type {
   PRImpactReport,
   PRAnalysisHistoryItem,
   PRImpactRequestPayload,
+  AffectedEndpointItem,
+  ImpactedTestItem,
+  MissingTestItem,
+  PRFeedbackStatus,
 } from '../types/prImpact';
 import {
   samplePRUrls,
@@ -43,6 +47,18 @@ export const PRImpactView: React.FC<Props> = ({
   const [history, setHistory] = useState<PRAnalysisHistoryItem[]>(
     initialAnalysisHistory,
   );
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, PRFeedbackStatus>>({});
+
+  const activeReportKey =
+    activeReport?.pr_url || activeReport?.patch_name || 'active-report';
+  const currentFeedback = feedbackMap[activeReportKey] || 'pending';
+
+  const handleFeedback = (status: PRFeedbackStatus) => {
+    setFeedbackMap((prev) => ({
+      ...prev,
+      [activeReportKey]: status,
+    }));
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -84,20 +100,63 @@ export const PRImpactView: React.FC<Props> = ({
           const prNumMatch = payload.pr_url?.match(/\/pull\/(\d+)/);
           const prNum = prNumMatch ? prNumMatch[1] : '99';
           title = `PR #${prNum} (${repoName})`;
+          const isEven = Number(prNum) % 2 === 0;
           newReport = {
             pr_url: payload.pr_url,
             patch_name: null,
-            risk_level: Number(prNum) % 2 === 0 ? 'LOW' : 'MEDIUM',
-            risk_score: Number(prNum) % 2 === 0 ? 0.04 : 0.22,
+            risk_level: isEven ? 'LOW' : 'MEDIUM',
+            risk_score: isEven ? 0.04 : 0.22,
             files_changed_count: 3,
             impacted_symbols_count: 14,
-            affected_endpoints_count: Number(prNum) % 2 === 0 ? 0 : 2,
+            affected_endpoints_count: isEven ? 0 : 2,
             impacted_tests_count: 2,
             summary: `Automated impact analysis for PR #${prNum}: verified AST modified symbol boundaries against PostgreSQL call graph.`,
+            impacted_endpoints: isEven
+              ? []
+              : [
+                  {
+                    method: 'POST',
+                    route: `/api/repos/${repoId}/search`,
+                    handler_name: 'search_repository',
+                    confidence: 0.94,
+                  },
+                  {
+                    method: 'POST',
+                    route: `/api/repos/${repoId}/ask`,
+                    handler_name: 'ask_codebase',
+                    confidence: 0.88,
+                  },
+                ],
+            impacted_tests: [
+              {
+                id: `t-${prNum}-1`,
+                test_name: `test_pr_${prNum}_behavior`,
+                file_path: 'backend/tests/unit/test_resolver.py',
+                confidence: 0.95,
+              },
+              {
+                id: `t-${prNum}-2`,
+                test_name: 'test_regression_suite',
+                file_path: 'backend/tests/unit/test_regression.py',
+                confidence: 0.82,
+              },
+            ],
+            missing_tests: isEven
+              ? []
+              : [
+                  {
+                    symbol_name: 'compute_priority_score',
+                    file_path: 'backend/reposcope/impact/risk_score.py',
+                    reason: 'Modified AST callable lacks direct static test association',
+                  },
+                ],
           };
         } else {
           const lineCount = payload.patch?.split('\n').length || 10;
           title = `Raw Patch (${lineCount} lines)`;
+          const hasEndpoints =
+            payload.patch?.includes('@router') || payload.patch?.includes('@app');
+          const hasTests = payload.patch?.toLowerCase().includes('test');
           newReport = {
             pr_url: null,
             patch_name: 'Pasted Unified Diff',
@@ -114,15 +173,36 @@ export const PRImpactView: React.FC<Props> = ({
               (payload.patch?.match(/def |class /g) || []).length,
               3,
             ),
-            affected_endpoints_count:
-              payload.patch?.includes('@router') ||
-              payload.patch?.includes('@app')
-                ? 1
-                : 0,
-            impacted_tests_count: payload.patch?.toLowerCase().includes('test')
-              ? 2
-              : 0,
+            affected_endpoints_count: hasEndpoints ? 1 : 0,
+            impacted_tests_count: hasTests ? 2 : 0,
             summary: `Evaluated pasted unified diff containing ${lineCount} lines across repository symbol boundaries.`,
+            impacted_endpoints: hasEndpoints
+              ? [
+                  {
+                    method: 'POST',
+                    route: '/api/v1/resource',
+                    handler_name: 'handle_resource',
+                    confidence: 0.91,
+                  },
+                ]
+              : [],
+            impacted_tests: hasTests
+              ? [
+                  {
+                    id: 'patch-t1',
+                    test_name: 'test_patch_behavior',
+                    file_path: 'backend/tests/unit/test_patch.py',
+                    confidence: 1.0,
+                  },
+                ]
+              : [],
+            missing_tests: [
+              {
+                symbol_name: 'patch_target_symbol',
+                file_path: 'backend/reposcope/impact/diff_parser.py',
+                reason: 'Raw patch modifies core logic without verified test links',
+              },
+            ],
           };
         }
 
@@ -353,6 +433,164 @@ export const PRImpactView: React.FC<Props> = ({
             kicker="ACTIVE ASSESSMENT REPORT"
             title={activeReport.pr_url || activeReport.patch_name || 'Pull Request Analysis'}
           />
+        </section>
+      )}
+
+      {/* DOWNSTREAM TARGETS: IMPACTED TESTS & ENDPOINTS DETAILS */}
+      {activeReport && (
+        <section
+          className="pr-impact-view__details-section bauhaus-border-b"
+          aria-label="Impacted Tests and Endpoints Analysis"
+        >
+          <div className="pr-impact-view__details-header">
+            <div>
+              <span className="pr-impact-view__details-kicker">DOWNSTREAM DEPENDENCY RIPPLE</span>
+              <h3 className="pr-impact-view__details-title">
+                IMPACTED TESTS & EXPOSED ENDPOINTS
+              </h3>
+            </div>
+
+            {/* FEEDBACK ACTION BAR */}
+            <div className="pr-impact-view__feedback-bar" role="group" aria-label="Review Actions">
+              <span
+                className={`pr-impact-view__feedback-status pr-impact-view__feedback-status--${currentFeedback}`}
+                role="status"
+              >
+                {currentFeedback === 'accepted'
+                  ? '✓ RECOMMENDATIONS ACCEPTED'
+                  : currentFeedback === 'dismissed'
+                  ? '✕ ANALYSIS DISMISSED'
+                  : 'STATUS: PENDING REVIEW'}
+              </span>
+              <div className="pr-impact-view__feedback-actions">
+                <button
+                  type="button"
+                  className={`bauhaus-btn-invert pr-impact-view__feedback-btn ${
+                    currentFeedback === 'accepted' ? 'pr-impact-view__feedback-btn--active' : ''
+                  }`}
+                  onClick={() => handleFeedback('accepted')}
+                  aria-label="Accept recommendations"
+                >
+                  ✓ ACCEPT RECOMMENDATIONS
+                </button>
+                <button
+                  type="button"
+                  className={`bauhaus-btn pr-impact-view__feedback-btn ${
+                    currentFeedback === 'dismissed' ? 'pr-impact-view__feedback-btn--dismissed' : ''
+                  }`}
+                  onClick={() => handleFeedback('dismissed')}
+                  aria-label="Dismiss analysis"
+                >
+                  ✕ DISMISS
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="pr-impact-view__details-grid">
+            {/* 01 // AFFECTED API ENDPOINTS */}
+            <div className="pr-impact-view__details-card" data-testid="affected-endpoints-panel">
+              <div className="pr-impact-view__card-heading">
+                <h4 className="pr-impact-view__card-title">01 // AFFECTED API ROUTES</h4>
+                <span className="pr-impact-view__card-count">
+                  {(activeReport.impacted_endpoints || []).length}
+                </span>
+              </div>
+              <p className="pr-impact-view__card-sub">
+                Public API routes reachable downstream via BFS traversal from PR seed symbols.
+              </p>
+              {(!activeReport.impacted_endpoints || activeReport.impacted_endpoints.length === 0) ? (
+                <div className="pr-impact-view__empty-box">
+                  No public API routes reachable downstream from modified symbols.
+                </div>
+              ) : (
+                <div className="pr-impact-view__items-list">
+                  {activeReport.impacted_endpoints.map((ep, idx) => (
+                    <div key={`${ep.method}-${ep.route}-${idx}`} className="pr-impact-view__endpoint-row">
+                      <div className="pr-impact-view__endpoint-main">
+                        <span className={`pr-impact-view__method-badge pr-impact-view__method-badge--${ep.method.toLowerCase()}`}>
+                          {ep.method}
+                        </span>
+                        <code className="pr-impact-view__route-code">{ep.route}</code>
+                      </div>
+                      <div className="pr-impact-view__endpoint-meta">
+                        <span className="pr-impact-view__handler-name">{ep.handler_name}</span>
+                        <span className="pr-impact-view__confidence-tag">
+                          {(ep.confidence * 100).toFixed(0)}% CONFIDENCE
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 02 // RELEVANT TESTS TO RUN */}
+            <div className="pr-impact-view__details-card" data-testid="impacted-tests-panel">
+              <div className="pr-impact-view__card-heading">
+                <h4 className="pr-impact-view__card-title">02 // RELEVANT TESTS TO RUN</h4>
+                <span className="pr-impact-view__card-count">
+                  {(activeReport.impacted_tests || []).length}
+                </span>
+              </div>
+              <p className="pr-impact-view__card-sub">
+                Static test suites linked to modified callables that should be executed before merge.
+              </p>
+              {(!activeReport.impacted_tests || activeReport.impacted_tests.length === 0) ? (
+                <div className="pr-impact-view__empty-box">
+                  No existing tests directly cover the modified production callables.
+                </div>
+              ) : (
+                <div className="pr-impact-view__items-list">
+                  {activeReport.impacted_tests.map((test) => (
+                    <div key={test.id} className="pr-impact-view__test-row">
+                      <div className="pr-impact-view__test-main">
+                        <span className="pr-impact-view__test-icon">⚡</span>
+                        <code className="pr-impact-view__test-name">{test.test_name}</code>
+                      </div>
+                      <div className="pr-impact-view__test-meta">
+                        <span className="pr-impact-view__file-path">{test.file_path}</span>
+                        <span className="pr-impact-view__confidence-tag">
+                          {(test.confidence * 100).toFixed(0)}% PATH
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 03 // TEST GAPS / UNTESTED CALLABLES */}
+            <div className="pr-impact-view__details-card" data-testid="missing-tests-panel">
+              <div className="pr-impact-view__card-heading">
+                <h4 className="pr-impact-view__card-title">03 // MISSING TESTS (TEST GAPS)</h4>
+                <span className="pr-impact-view__card-count pr-impact-view__card-count--warning">
+                  {(activeReport.missing_tests || []).length}
+                </span>
+              </div>
+              <p className="pr-impact-view__card-sub">
+                Modified production symbols lacking static test coverage. Risk factor in assessment.
+              </p>
+              {(!activeReport.missing_tests || activeReport.missing_tests.length === 0) ? (
+                <div className="pr-impact-view__empty-box pr-impact-view__empty-box--ok">
+                  ✓ All modified production symbols have linked test coverage.
+                </div>
+              ) : (
+                <div className="pr-impact-view__items-list">
+                  {activeReport.missing_tests.map((mg, idx) => (
+                    <div key={`${mg.symbol_name}-${idx}`} className="pr-impact-view__missing-row">
+                      <div className="pr-impact-view__missing-main">
+                        <span className="pr-impact-view__gap-badge">TEST GAP</span>
+                        <code className="pr-impact-view__symbol-name">{mg.symbol_name}</code>
+                      </div>
+                      <p className="pr-impact-view__missing-reason">{mg.reason}</p>
+                      <span className="pr-impact-view__file-path">{mg.file_path}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       )}
 

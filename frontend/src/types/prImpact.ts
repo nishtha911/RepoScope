@@ -18,6 +18,9 @@ export interface PRImpactReport {
   affected_endpoints_count: number;
   impacted_tests_count: number;
   summary: string;
+  impacted_endpoints?: AffectedEndpointItem[];
+  impacted_tests?: ImpactedTestItem[];
+  missing_tests?: MissingTestItem[];
 }
 
 export interface PRAnalysisHistoryItem extends PRImpactReport {
@@ -31,3 +34,25 @@ export interface PRImpactRequestPayload {
   pr_url?: string | null;
   patch?: string | null;
 }
+
+export interface ImpactedTestItem {
+  id: string;
+  test_name: string;
+  file_path: string;
+  confidence: number; // e.g. 0.95 or 1.0
+}
+
+export interface MissingTestItem {
+  symbol_name: string;
+  file_path: string;
+  reason: string; // e.g. "No direct static test association found"
+}
+
+export interface AffectedEndpointItem {
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  route: string;
+  handler_name: string;
+  confidence: number;
+}
+
+export type PRFeedbackStatus = 'pending' | 'accepted' | 'dismissed';
