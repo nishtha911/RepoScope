@@ -204,4 +204,71 @@ describe('PRImpactView', () => {
       await screen.findByText(/Failed to calculate PR impact: Connection refused/i),
     ).toBeInTheDocument();
   });
+
+  it('renders impacted tests and exposed endpoints panels with confidence badges', () => {
+    render(<PRImpactView repoId={1} repoName="nishtha911/RepoScope" offlinePreview />);
+
+    // Details Section Header
+    expect(screen.getByText('DOWNSTREAM DEPENDENCY RIPPLE')).toBeInTheDocument();
+    expect(screen.getByText('IMPACTED TESTS & EXPOSED ENDPOINTS')).toBeInTheDocument();
+
+    // Feedback Action Bar
+    expect(screen.getByText('STATUS: PENDING REVIEW')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Accept recommendations/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dismiss analysis/i })).toBeInTheDocument();
+
+    // Check panels
+    expect(screen.getByTestId('affected-endpoints-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('impacted-tests-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('missing-tests-panel')).toBeInTheDocument();
+
+    // Initial report #42 has relevant tests
+    expect(screen.getByText('test_resolve_calls_exact_match')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('backend/tests/unit/test_resolver.py').length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('100% PATH')).toBeInTheDocument();
+
+    // Initial report #42 has no missing tests
+    expect(
+      screen.getByText(/All modified production symbols have linked test coverage/i),
+    ).toBeInTheDocument();
+  });
+
+  it('updates feedback status when clicking Accept and Dismiss buttons', () => {
+    render(<PRImpactView repoId={1} repoName="nishtha911/RepoScope" offlinePreview />);
+
+    const acceptBtn = screen.getByRole('button', { name: /Accept recommendations/i });
+    const dismissBtn = screen.getByRole('button', { name: /Dismiss analysis/i });
+
+    // Initial status
+    expect(screen.getByText('STATUS: PENDING REVIEW')).toBeInTheDocument();
+
+    // Click Accept
+    fireEvent.click(acceptBtn);
+    expect(screen.getByText('✓ RECOMMENDATIONS ACCEPTED')).toBeInTheDocument();
+
+    // Click Dismiss
+    fireEvent.click(dismissBtn);
+    expect(screen.getByText('✕ ANALYSIS DISMISSED')).toBeInTheDocument();
+  });
+
+  it('renders affected endpoints and missing test gaps when inspecting PR #41', () => {
+    render(<PRImpactView repoId={1} repoName="nishtha911/RepoScope" offlinePreview />);
+
+    // Select PR #41 from history
+    const viewButtons = screen.getAllByRole('button', { name: /View report for/i });
+    fireEvent.click(viewButtons[1]); // PR #41
+
+    // Endpoints for PR #41
+    expect(screen.getByText('/api/repos/{id}/search')).toBeInTheDocument();
+    expect(screen.getByText('search_repository')).toBeInTheDocument();
+    expect(screen.getByText('94% CONFIDENCE')).toBeInTheDocument();
+
+    // Missing test gap for PR #41
+    expect(screen.getByText('tune_ef_search_param')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Modified performance tuning callable lacks direct test coverage/i),
+    ).toBeInTheDocument();
+  });
 });
