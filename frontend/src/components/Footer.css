@@ -1,4 +1,4 @@
-/* Footer - Clean Bauhaus Aesthetic */
+/* Footer - Bauhaus Grid Design */
 
 .site-footer {
   border-top: var(--border-thin);
@@ -13,7 +13,7 @@
   justify-content: space-between;
   padding: 16px 32px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 /* Left side */
@@ -47,15 +47,17 @@
 .site-footer__status-text {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #e5e5e5;
+  color: #f5f5f5;
+  font-weight: 600;
 }
 
 /* Status dots */
 .footer__dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   flex-shrink: 0;
 }
 
