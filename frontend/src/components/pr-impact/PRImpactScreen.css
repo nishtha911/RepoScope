@@ -1,0 +1,73 @@
+.pr-impact-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.pr-impact-review-actions button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.pr-impact-review-actions button.is-selected {
+  background: var(--pastel-green);
+}
+
+.pr-impact-review-actions button.is-selected.is-dismissed {
+  background: var(--pastel-pink);
+}
+
+.pr-impact-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pr-impact-detail-grid section {
+  border: 1px solid var(--border);
+  padding: 16px;
+  background: var(--surface);
+}
+
+.pr-impact-detail-grid h3 {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+}
+
+.pr-impact-detail-grid ul {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pr-impact-detail-grid li {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  font-size: 0.78rem;
+}
+
+.pr-impact-detail-grid li span,
+.pr-impact-detail-grid li b {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+@media (max-width: 900px) {
+  .pr-impact-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

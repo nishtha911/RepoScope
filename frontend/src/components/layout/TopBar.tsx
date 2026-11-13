@@ -8,6 +8,7 @@ interface TopBarProps {
   onSearchChange: (query: string) => void;
   onSearchSubmit: () => void;
   searchLatencyMs?: number | null;
+  repositoryName?: string;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -16,6 +17,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSearchChange,
   onSearchSubmit,
   searchLatencyMs,
+  repositoryName,
 }) => {
   const tabTitles: Record<NavTab, string> = {
     OVERVIEW: 'Overview',
@@ -34,7 +36,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <nav aria-label="Breadcrumbs" className="reposcope-topbar__breadcrumbs">
         <span className="reposcope-topbar__crumb">Workspace</span>
         <span className="reposcope-topbar__separator">/</span>
-        <span className="reposcope-topbar__crumb">platform</span>
+        <span className="reposcope-topbar__crumb">{repositoryName ?? 'repository'}</span>
         <span className="reposcope-topbar__separator">/</span>
         <span className="reposcope-topbar__crumb reposcope-topbar__crumb--active">
           {currentTitle}
@@ -61,10 +63,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           />
           {searchLatencyMs !== null && searchLatencyMs !== undefined ? (
             <span className="reposcope-topbar__latency-badge">
-              ⚡ {searchLatencyMs}ms
+              {searchLatencyMs}ms
             </span>
           ) : (
-            <kbd className="reposcope-topbar__shortcut-badge">⌘ K</kbd>
+            <kbd className="reposcope-topbar__shortcut-badge">Ctrl + K</kbd>
           )}
         </div>
 
@@ -81,7 +83,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Organization Badge */}
         <div className="reposcope-topbar__org-badge">
-          ACME
+          {repositoryName ?? 'REPOSITORY'}
         </div>
       </div>
     </header>

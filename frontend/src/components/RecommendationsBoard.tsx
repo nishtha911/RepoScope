@@ -3,7 +3,6 @@ import type {
   RecommendationItem,
   RecommendationsResponse,
 } from '../types/recommendations';
-import { sampleRecommendations } from '../fixtures/recommendations';
 import {
   getCategoryMeta,
   getImpactLevel,
@@ -16,6 +15,7 @@ export interface RecommendationsBoardProps {
   repoId: number;
   repoName: string;
   apiBase?: string;
+  /** @deprecated Live API is always used. Retained for compatibility with callers. */
   offlinePreview?: boolean;
   onInspectSymbol?: (symbolId: number) => void;
   maxItems?: number;
@@ -31,14 +31,11 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
   repoId,
   repoName,
   apiBase = 'http://localhost:8000/api',
-  offlinePreview = true,
   onInspectSymbol,
   maxItems = 10,
 }) => {
-  const [items, setItems] = useState<RecommendationItem[]>(() =>
-    offlinePreview ? sampleRecommendations.slice(0, maxItems) : [],
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(() => !offlinePreview);
+  const [items, setItems] = useState<RecommendationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('ALL');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -46,17 +43,9 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
     snapshot_id: number | null;
     run_id: number | null;
     commit_sha: string | null;
-  }>(() =>
-    offlinePreview
-      ? { snapshot_id: 1, run_id: 42, commit_sha: 'a1b2c3d4e5f6' }
-      : { snapshot_id: null, run_id: null, commit_sha: null },
-  );
+  }>({ snapshot_id: null, run_id: null, commit_sha: null });
 
   useEffect(() => {
-    if (offlinePreview) {
-      return;
-    }
-
     let ignore = false;
     async function fetchLive() {
       try {
@@ -95,19 +84,11 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
     return () => {
       ignore = true;
     };
-  }, [apiBase, repoId, maxItems, offlinePreview]);
+  }, [apiBase, repoId, maxItems]);
 
   const handleRefresh = async () => {
     setIsLoading(true);
     setError(null);
-
-    if (offlinePreview) {
-      setTimeout(() => {
-        setItems(sampleRecommendations.slice(0, maxItems));
-        setIsLoading(false);
-      }, 150);
-      return;
-    }
 
     try {
       const response = await fetch(
@@ -200,12 +181,10 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
         <div className="rec-board__meta-box">
           <span
             className={`rec-board__mode-badge ${
-              offlinePreview ? 'rec-board__mode-badge--offline' : ''
+              ''
             }`}
           >
-            {offlinePreview
-              ? 'OFFLINE FIXTURE MODE'
-              : `LIVE API: GET /api/repos/${repoId}/recommendations`}
+            {`LIVE API: GET /api/repos/${repoId}/recommendations`}
           </span>
 
           <span className="rec-board__repo-info">
@@ -258,7 +237,7 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
             }`}
             onClick={() => setActiveFilter('COMPLEXITY_HOTSPOT')}
           >
-            ⚡ COMPLEXITY HOTSPOTS ({countComplexity})
+            COMPLEXITY HOTSPOTS ({countComplexity})
           </button>
 
           <button
@@ -496,7 +475,7 @@ export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
                           >
                             {item.rationale_source === 'llm_constrained'
                               ? '✓ LLM-CONSTRAINED RATIONALE'
-                              : '⚡ DETERMINISTIC RATIONALE'}
+                              : 'DETERMINISTIC RATIONALE'}
                           </span>
                         </div>
 

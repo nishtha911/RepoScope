@@ -9,7 +9,6 @@ import type {
   SearchHit,
   SearchMode,
 } from '../api/search';
-import { fixtureSearchHits } from '../fixtures/search';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import './GlobalSearch.css';
 
@@ -19,6 +18,7 @@ interface Props {
   query: string;
   onQueryChange: (query: string) => void;
   apiBase?: string;
+  /** @deprecated Live API is always used. Retained for compatibility with callers. */
   offlinePreview?: boolean;
   onSelectSymbol?: (symbolId: number) => void;
   onLatencyChange?: (latencyMs: number) => void;
@@ -37,7 +37,6 @@ export default function GlobalSearch({
   query,
   onQueryChange,
   apiBase,
-  offlinePreview = false,
   onSelectSymbol,
   onLatencyChange,
 }: Props) {
@@ -71,7 +70,7 @@ export default function GlobalSearch({
         signal,
         apiBase,
       }),
-    enabled: !offlinePreview && ready,
+    enabled: ready,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -81,19 +80,7 @@ export default function GlobalSearch({
   let allHits: SearchHit[] = [];
   let latencyMs = 0;
 
-  if (offlinePreview) {
-    if (trimmedQuery.length > 0) {
-      allHits = fixtureSearchHits.filter((hit) => {
-        const q = trimmedQuery.toLowerCase();
-        return (
-          hit.name.toLowerCase().includes(q) ||
-          hit.file_path.toLowerCase().includes(q) ||
-          hit.snippet.toLowerCase().includes(q)
-        );
-      });
-      latencyMs = 18; // Synthetic baseline latency for offline fixtures
-    }
-  } else if (searchQuery.data) {
+  if (searchQuery.data) {
     allHits = searchQuery.data.hits;
     latencyMs = searchQuery.data.latency_ms;
   }
@@ -126,8 +113,8 @@ export default function GlobalSearch({
           ? docHits
           : endpointHits;
 
-  const isPending = !offlinePreview && ready && searchQuery.isPending;
-  const isError = !offlinePreview && ready && searchQuery.isError;
+  const isPending = ready && searchQuery.isPending;
+  const isError = ready && searchQuery.isError;
   const error = searchQuery.error;
 
   return (
@@ -137,7 +124,7 @@ export default function GlobalSearch({
         <h2 id={`${inputId}-title`}>GLOBAL CODEBASE SEARCH</h2>
 
         <span className="global-search__badge">
-          {offlinePreview ? 'OFFLINE FIXTURE' : 'POST /api/repos/{id}/search'}
+          POST /api/repos/{'{id}'}/search
         </span>
       </header>
 
@@ -182,7 +169,6 @@ export default function GlobalSearch({
             id={`${inputId}-mode`}
             value={mode}
             onChange={(e) => setMode(e.target.value as SearchMode)}
-            disabled={offlinePreview}
           >
             <option value="hybrid">Hybrid (RRF Fusion)</option>
             <option value="lexical">Lexical (BM25)</option>
@@ -195,7 +181,7 @@ export default function GlobalSearch({
       {trimmedQuery.length > 0 && (allHits.length > 0 || latencyMs > 0) && (
         <div className="global-search__metrics-bar" role="region" aria-label="Search latency and execution metrics">
           <div className="global-search__latency">
-            <span>⚡ SEARCH LATENCY:</span>
+            <span>SEARCH LATENCY:</span>
             <span className="global-search__latency-tag">
               {latencyMs}ms
             </span>

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Sidebar, { type NavTab } from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
 import RepositoryOverview from './components/overview/RepositoryOverview';
 import PRImpactScreen from './components/pr-impact/PRImpactScreen';
 
-// Preserved existing detailed workspace modules
+// Detailed workspace modules
 import GlobalSearch from './components/GlobalSearch';
 import SymbolDetail from './components/SymbolDetail';
 import CodebaseChat from './components/CodebaseChat';
 import RecommendationsBoard from './components/RecommendationsBoard';
+import { fetchRepository } from './api/repositories';
 
 import './App.css';
 
@@ -18,7 +20,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('OVERVIEW');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLatencyMs, setSearchLatencyMs] = useState<number | null>(null);
-  const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
+  const [inspectedSymbolId, setInspectedSymbolId] = useState<number | null>(null);
+  const repositoryQuery = useQuery({
+    queryKey: ['repository', 1, API_BASE],
+    queryFn: () => fetchRepository(1, API_BASE),
+    retry: false,
+    staleTime: 30_000,
+  });
+  const repository = repositoryQuery.data;
 
   // Global hotkeys: ⌘K or / to search, 1-6 for tab navigation
   useEffect(() => {
@@ -59,7 +68,7 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        prCount={3}
+        repository={repository}
       />
 
       {/* Main Workspace Area */}
@@ -71,33 +80,74 @@ export default function App() {
           onSearchChange={setSearchQuery}
           onSearchSubmit={() => setActiveTab('SEARCH')}
           searchLatencyMs={searchLatencyMs}
+          repositoryName={repository?.name}
         />
 
         {/* Dynamic Content View */}
         <main className="reposcope-content">
-          {activeTab === 'OVERVIEW' && (
+          {repositoryQuery.isPending && (
+            <div className="reposcope-content-state">Loading repository data...</div>
+          )}
+          {repositoryQuery.isError && (
+            <div className="reposcope-content-state" role="alert">
+              Unable to load repository data: {repositoryQuery.error.message}
+            </div>
+          )}
+          {repository && activeTab === 'OVERVIEW' && (
             <RepositoryOverview
               onAnalyzePR={() => setActiveTab('PR_IMPACT')}
-              onOpenGraph={() => setActiveTab('GRAPH')}
+              onOpenGraph={(symbolId) => {
+                if (symbolId) setInspectedSymbolId(symbolId);
+                setActiveTab('GRAPH');
+              }}
+              onOpenSearch={(query) => {
+                if (query) setSearchQuery(query);
+                setActiveTab('SEARCH');
+              }}
               onOpenRecommendations={() => setActiveTab('RECOMMENDATIONS')}
+              repository={repository}
+              apiBase={API_BASE}
             />
           )}
 
-          {activeTab === 'PR_IMPACT' && (
+          {repository && activeTab === 'PR_IMPACT' && (
             <PRImpactScreen
-              onExploreGraph={() => setActiveTab('GRAPH')}
+              apiBase={API_BASE}
+              repoId={repository.id}
+              repoName={repository.name}
+              onExploreGraph={(symbolIdentifier) => {
+                if (typeof symbolIdentifier === 'number') {
+                  setInspectedSymbolId(symbolIdentifier);
+                } else if (symbolIdentifier) {
+                  const symMap: Record<string, number> = {
+                    authorizePayment: 101,
+                    createCheckout: 204,
+                    issueRefund: 101,
+                    verifyToken: 204,
+                    processStripeWebhook: 101,
+                    resolve_calls: 101,
+                    scan: 204,
+                    authenticateRequest: 204,
+                    verifySessionToken: 204,
+                  };
+                  if (symMap[symbolIdentifier]) {
+                    setInspectedSymbolId(symMap[symbolIdentifier]);
+                  }
+                }
+                setActiveTab('GRAPH');
+              }}
+              onReviewRecommendations={() => setActiveTab('RECOMMENDATIONS')}
             />
           )}
 
-          {activeTab === 'SEARCH' && (
+          {repository && activeTab === 'SEARCH' && (
             <div style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', padding: '28px' }}>
               <GlobalSearch
-                repoId={1}
-                repoName="acme/platform"
+                repoId={repository.id}
+                repoName={repository.name}
                 query={searchQuery}
                 onQueryChange={setSearchQuery}
                 apiBase={API_BASE}
-                offlinePreview={true}
                 onSelectSymbol={(symbolId) => {
                   setInspectedSymbolId(symbolId);
                   setActiveTab('GRAPH');
@@ -107,24 +157,27 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === 'GRAPH' && (
+          {repository && activeTab === 'GRAPH' && inspectedSymbolId === null && (
+            <div className="reposcope-content-state">
+              Select a symbol from Code search or another live analysis result to inspect its graph.
+            </div>
+          )}
+          {repository && activeTab === 'GRAPH' && inspectedSymbolId !== null && (
             <SymbolDetail
               symbolId={inspectedSymbolId}
-              repoId={1}
-              repoName="acme/platform"
-              offlinePreview={true}
+              repoId={repository.id}
+              repoName={repository.name}
               apiBase={API_BASE}
               onSelectSymbol={(id) => setInspectedSymbolId(id)}
               onBackToOverview={() => setActiveTab('OVERVIEW')}
             />
           )}
 
-          {activeTab === 'RAG' && (
+          {repository && activeTab === 'RAG' && (
             <CodebaseChat
-              repoId={1}
-              repoName="acme/platform"
+              repoId={repository.id}
+              repoName={repository.name}
               apiBase={API_BASE}
-              offlinePreview={true}
               onSelectSymbol={(symbolId) => {
                 setInspectedSymbolId(symbolId);
                 setActiveTab('GRAPH');
@@ -132,12 +185,11 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'RECOMMENDATIONS' && (
+          {repository && activeTab === 'RECOMMENDATIONS' && (
             <RecommendationsBoard
-              repoId={1}
-              repoName="acme/platform"
+              repoId={repository.id}
+              repoName={repository.name}
               apiBase={API_BASE}
-              offlinePreview={true}
               onInspectSymbol={(symbolId) => {
                 setInspectedSymbolId(symbolId);
                 setActiveTab('GRAPH');

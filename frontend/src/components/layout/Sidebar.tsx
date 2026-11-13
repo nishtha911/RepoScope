@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronDown,
 } from 'lucide-react';
+import type { Repository } from '../../api/repositories';
 
 export type NavTab =
   | 'OVERVIEW'
@@ -22,12 +23,14 @@ interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   prCount?: number;
+  repository?: Repository;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
-  prCount = 3,
+  prCount,
+  repository,
 }) => {
   const navItems = [
     {
@@ -84,11 +87,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Repository Selector */}
-        <div className="reposcope-sidebar__repo-box" role="button" tabIndex={0}>
+        <div className="reposcope-sidebar__repo-box">
           <div className="reposcope-sidebar__repo-info">
-            <span className="reposcope-sidebar__repo-name">acme / platform</span>
+            <span className="reposcope-sidebar__repo-name">{repository?.name ?? 'Repository'}</span>
             <span className="reposcope-sidebar__repo-visibility">
-              Private repository
+              {repository?.status ?? 'not connected'}
             </span>
           </div>
           <ChevronDown size={14} className="reposcope-sidebar__repo-chevron" />
@@ -130,11 +133,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="reposcope-sidebar__index-card">
           <div className="reposcope-sidebar__index-header">
             <span className="reposcope-sidebar__status-dot" aria-hidden="true" />
-            <span className="reposcope-sidebar__index-status">Index up to date</span>
+            <span className="reposcope-sidebar__index-status">
+              {repository?.status === 'ready' ? 'Index up to date' : `Index ${repository?.status ?? 'unavailable'}`}
+            </span>
           </div>
-          <p className="reposcope-sidebar__index-synced">Last synced 2 minutes ago</p>
+          <p className="reposcope-sidebar__index-synced">
+            {repository?.head_sha ? `Commit ${repository.head_sha.slice(0, 7)}` : 'No indexed snapshot'}
+          </p>
           <div className="reposcope-sidebar__index-commit">
-            <span>main · a7c92e1</span>
+            <span>{repository ? `${repository.default_branch} · ${repository.head_sha?.slice(0, 7) ?? 'pending'}` : 'No repository'}</span>
             <div className="reposcope-sidebar__index-bar" />
           </div>
         </div>
@@ -151,11 +158,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Org Label */}
         <div className="reposcope-sidebar__org-label">
-          ACME ENGINEERING
+          {repository?.name ?? 'REPOSITORY WORKSPACE'}
         </div>
       </div>
     </aside>
   );
 };
 export default Sidebar;
-

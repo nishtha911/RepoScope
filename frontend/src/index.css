@@ -44,6 +44,14 @@
   padding: 0;
 }
 
+html, body, button, input, select, textarea, optgroup, h1, h2, h3, h4, h5, h6, p, span, div, a, table, th, td {
+  font-family: var(--font-sans);
+}
+
+code, pre, kbd, samp, .font-mono {
+  font-family: var(--font-mono) !important;
+}
+
 body {
   background-color: var(--canvas);
   color: var(--ink);
