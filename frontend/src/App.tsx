@@ -88,7 +88,8 @@ async function registerRepo(url: string) {
 }
 
 export default function App() {
-  const [offlinePreview, setOfflinePreview] = useState(true);
+  const [offlinePreview, setOfflinePreview] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
   const [selectedRepoId, setSelectedRepoId] = useState(1);
@@ -140,8 +141,18 @@ export default function App() {
     onSuccess: () => {
       setIsRegistering(false);
       setNewRepoUrl('');
+      setToast('Repository registration accepted. Indexing will begin in the backend.');
+    },
+    onError: (error: Error) => {
+      setToast(error.message);
     },
   });
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const systemStatus = offlinePreview
     ? '[ OFFLINE FIXTURE PREVIEW ]'
@@ -1084,6 +1095,14 @@ export default function App() {
         apiHealth={healthData}
         isHealthError={isHealthError}
       />
+      {toast && (
+        <div className="reposcope-toast" role="alert">
+          <span>{toast}</span>
+          <button type="button" onClick={() => setToast(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }
