@@ -3,9 +3,6 @@ import type {
   PRImpactReport,
   PRAnalysisHistoryItem,
   PRImpactRequestPayload,
-  AffectedEndpointItem,
-  ImpactedTestItem,
-  MissingTestItem,
   PRFeedbackStatus,
 } from '../types/prImpact';
 import {
@@ -545,7 +542,7 @@ export const PRImpactView: React.FC<Props> = ({
                   {activeReport.impacted_tests.map((test) => (
                     <div key={test.id} className="pr-impact-view__test-row">
                       <div className="pr-impact-view__test-main">
-                        <span className="pr-impact-view__test-icon">⚡</span>
+                        <span className="pr-impact-view__test-icon">TEST</span>
                         <code className="pr-impact-view__test-name">{test.test_name}</code>
                       </div>
                       <div className="pr-impact-view__test-meta">
