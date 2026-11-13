@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { ChatMessage, CitationEvidence, AskTimings } from '../types/chat';
+import type { ChatMessage, CitationEvidence } from '../types/chat';
+import {
+  initialChatMessages,
+  sampleStarterPrompts,
+  fixturePromptResponses,
+  fixtureEvidence,
+} from '../fixtures/chat';
 import MarkdownRenderer from './MarkdownRenderer';
 import './CodebaseChat.css';
 
@@ -7,18 +13,32 @@ interface Props {
   repoId: number;
   repoName: string;
   apiBase?: string;
-  /** @deprecated Live API is always used. Retained for compatibility with callers. */
   offlinePreview?: boolean;
   onSelectSymbol?: (symbolId: number) => void;
+}
+
+function pickFixtureResponse(query: string) {
+  const q = query.toLowerCase();
+  if (q.includes('resolver') || q.includes('ast') || q.includes('pass')) {
+    return fixturePromptResponses.resolver;
+  }
+  if (q.includes('rrf') || q.includes('search') || q.includes('fusion') || q.includes('hybrid')) {
+    return fixturePromptResponses.search;
+  }
+  if (q.includes('evidence') || q.includes('gap') || q.includes('pack') || q.includes('citation')) {
+    return fixturePromptResponses.evidence;
+  }
+  return fixturePromptResponses.default;
 }
 
 export const CodebaseChat: React.FC<Props> = ({
   repoId,
   repoName,
   apiBase = 'http://localhost:8000/api',
+  offlinePreview = true,
   onSelectSymbol,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedDrawers, setExpandedDrawers] = useState<Record<string, boolean>>({});
@@ -75,7 +95,7 @@ export const CodebaseChat: React.FC<Props> = ({
 
   const handleClearChat = useCallback(() => {
     handleStopGeneration();
-    setMessages([]);
+    setMessages(initialChatMessages);
     setExpandedDrawers({});
   }, [handleStopGeneration]);
 
@@ -108,7 +128,57 @@ export const CodebaseChat: React.FC<Props> = ({
       setInputValue('');
       setIsGenerating(true);
 
-      {
+      if (offlinePreview) {
+        // Offline preview mode: Realistic simulated token streaming
+        const target = pickFixtureResponse(trimmed);
+        const fullText = target.content;
+        // Split words to stream tokens
+        const words = fullText.split(' ');
+        let currentWordIndex = 0;
+        let accumulatedText = '';
+
+        streamIntervalRef.current = setInterval(() => {
+          if (currentWordIndex >= words.length) {
+            if (streamIntervalRef.current) {
+              clearInterval(streamIntervalRef.current);
+              streamIntervalRef.current = null;
+            }
+            setIsGenerating(false);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: fullText,
+                      isStreaming: false,
+                      citations: target.citations,
+                      latencyMs: target.latencyMs,
+                    }
+                  : msg,
+              ),
+            );
+          } else {
+            // Stream 2 words per tick for high realism
+            const nextChunk =
+              words.slice(currentWordIndex, currentWordIndex + 2).join(' ') + ' ';
+            accumulatedText += nextChunk;
+            currentWordIndex += 2;
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: accumulatedText,
+                      citations: target.citations,
+                    }
+                  : msg,
+              ),
+            );
+          }
+        }, 40);
+      } else {
+        // Online mode: Connect to API
         const controller = new AbortController();
         abortControllerRef.current = controller;
         const startTime = performance.now();
@@ -129,39 +199,10 @@ export const CodebaseChat: React.FC<Props> = ({
             );
           }
 
-          const data = await response.json() as {
-            answer?: string;
-            content?: string;
-            citations?: Record<string, CitationEvidence>;
-            evidence?: Array<{
-              evidence_id: string;
-              file_path: string;
-              start_line: number;
-              end_line: number;
-              text: string;
-              symbol_id?: number;
-            }>;
-            timings?: AskTimings;
-          };
-          const content = data.answer ?? data.content ?? 'No response generated.';
-
-          // Map evidence array → citation record (evidence_id → CitationEvidence)
-          const citations: Record<string, CitationEvidence> = data.citations ?? {};
-          if (data.evidence && Object.keys(citations).length === 0) {
-            for (const ev of data.evidence) {
-              citations[ev.evidence_id] = {
-                evidence_id: ev.evidence_id,
-                name: ev.file_path,
-                file_path: ev.file_path,
-                start_line: ev.start_line,
-                end_line: ev.end_line,
-                snippet: ev.text,
-                kind: 'function',
-                symbol_id: ev.symbol_id,
-                origin: 'seed',
-              };
-            }
-          }
+          const data = await response.json();
+          const content = data.answer || data.content || 'No response generated.';
+          const citations: Record<string, CitationEvidence> =
+            data.citations || fixtureEvidence;
 
           setMessages((prev) =>
             prev.map((msg) =>
@@ -172,7 +213,6 @@ export const CodebaseChat: React.FC<Props> = ({
                     isStreaming: false,
                     citations,
                     latencyMs: elapsed,
-                    timings: data.timings,
                   }
                 : msg,
             ),
@@ -190,7 +230,7 @@ export const CodebaseChat: React.FC<Props> = ({
               msg.id === assistantMessageId
                 ? {
                     ...msg,
-                    content: `Failed to generate an answer from the server: ${errorMessage}`,
+                    content: `⚠️ **Failed to generate answer from server**: ${errorMessage}\n\nYou can switch to **OFFLINE PREVIEW** mode in the header to interact with pre-indexed graph evidence and simulated streaming responses.`,
                     isStreaming: false,
                     error: errorMessage,
                   }
@@ -203,7 +243,7 @@ export const CodebaseChat: React.FC<Props> = ({
         }
       }
     },
-    [apiBase, isGenerating, repoId],
+    [apiBase, isGenerating, offlinePreview, repoId],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -220,9 +260,11 @@ export const CodebaseChat: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 className="codebase-chat__title">CODEBASE CHAT // GRAPHRAG</h2>
           <span
-            className="codebase-chat__badge"
+            className={`codebase-chat__badge ${
+              offlinePreview ? 'codebase-chat__badge--offline' : ''
+            }`}
           >
-            POST /api/repos/{'{id}'}/ask
+            {offlinePreview ? 'OFFLINE FIXTURE STREAM' : 'POST /api/repos/{id}/ask'}
           </span>
         </div>
 
@@ -308,7 +350,7 @@ export const CodebaseChat: React.FC<Props> = ({
                   {/* STREAMING STATUS BAR & STOP BUTTON */}
                   {message.isStreaming && (
                     <div className="chat-bubble__streaming-bar">
-                      <span>GENERATING STREAMING EVIDENCE RESPONSE…</span>
+                      <span>⚡ GENERATING STREAMING EVIDENCE RESPONSE…</span>
                       <button
                         type="button"
                         className="chat-bubble__stop-btn"
@@ -326,7 +368,7 @@ export const CodebaseChat: React.FC<Props> = ({
                       <div className="chat-bubble__metrics-row">
                         {message.latencyMs !== undefined && (
                           <span>
-                            TOTAL: <strong className="chat-bubble__latency-tag">{message.latencyMs}ms</strong>
+                            ⚡ LATENCY: <strong className="chat-bubble__latency-tag">{message.latencyMs}ms</strong>
                           </span>
                         )}
 
@@ -347,34 +389,6 @@ export const CodebaseChat: React.FC<Props> = ({
                           </button>
                         </div>
                       </div>
-
-                      {/* TIMING BREAKDOWN FOOTER */}
-                      {message.timings && (
-                        <div className="chat-bubble__timings" aria-label="Pipeline timing breakdown">
-                          <span className="chat-bubble__timings-label">PIPELINE TIMINGS</span>
-                          <span className="chat-bubble__timing-stage">
-                            <span className="chat-bubble__timing-stage-name">Retrieval</span>
-                            <span className="chat-bubble__timing-stage-value">{message.timings.retrieval_ms}ms</span>
-                          </span>
-                          <span className="chat-bubble__timing-sep" aria-hidden="true">+</span>
-                          <span className="chat-bubble__timing-stage">
-                            <span className="chat-bubble__timing-stage-name">Graph Expansion</span>
-                            <span className="chat-bubble__timing-stage-value">{message.timings.expansion_ms}ms</span>
-                          </span>
-                          <span className="chat-bubble__timing-sep" aria-hidden="true">+</span>
-                          <span className="chat-bubble__timing-stage">
-                            <span className="chat-bubble__timing-stage-name">LLM Synthesis</span>
-                            <span className="chat-bubble__timing-stage-value">{message.timings.synthesis_ms}ms</span>
-                          </span>
-                          <span className="chat-bubble__timing-sep" aria-hidden="true">=</span>
-                          <span className="chat-bubble__timing-stage chat-bubble__timing-stage--total">
-                            <span className="chat-bubble__timing-stage-name">Total</span>
-                            <span className="chat-bubble__timing-stage-value">
-                              {message.timings.retrieval_ms + message.timings.expansion_ms + message.timings.synthesis_ms}ms
-                            </span>
-                          </span>
-                        </div>
-                      )}
 
                       {/* EXPANDABLE REFERENCED EVIDENCE DRAWER */}
                       {hasCitations && (
@@ -442,7 +456,7 @@ export const CodebaseChat: React.FC<Props> = ({
       {/* QUICK PROMPT STARTER CHIPS */}
       <div className="codebase-chat__starters">
         <span className="codebase-chat__starters-label">SUGGESTIONS:</span>
-        {['What symbols depend on the selected code?', 'Where are the repository entry points?', 'Which files need tests?'].map((prompt) => (
+        {sampleStarterPrompts.map((prompt) => (
           <button
             key={prompt}
             type="button"

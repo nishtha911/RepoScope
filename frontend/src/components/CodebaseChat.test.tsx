@@ -52,7 +52,7 @@ describe('CodebaseChat', () => {
 
     // Finished streaming - streaming bar gone, metrics visible
     expect(screen.queryByText(/GENERATING STREAMING EVIDENCE RESPONSE/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/TOTAL:/i)).toBeInTheDocument();
+    expect(screen.getByText(/LATENCY:/i)).toBeInTheDocument();
   });
 
   it('clicking a starter suggestion chip submits the prompt immediately', async () => {
@@ -163,97 +163,5 @@ describe('CodebaseChat', () => {
     expect(
       await screen.findByText(/Failed to generate answer from server/i),
     ).toBeInTheDocument();
-  });
-
-  it('shows timing breakdown bar (retrieval, expansion, synthesis) after streaming completes', async () => {
-    render(<CodebaseChat repoId={1} repoName="nishtha911/RepoScope" offlinePreview />);
-
-    // Send a resolver question which uses the resolver fixture (timings defined)
-    const chip = screen.getByRole('button', {
-      name: /How does the two-pass AST reference resolver work\?/i,
-    });
-    fireEvent.click(chip);
-
-    await act(async () => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    // Timing breakdown bar should be visible
-    expect(screen.getByLabelText('Pipeline timing breakdown')).toBeInTheDocument();
-    expect(screen.getByText('PIPELINE TIMINGS')).toBeInTheDocument();
-    expect(screen.getByText('Retrieval')).toBeInTheDocument();
-    expect(screen.getByText('Graph Expansion')).toBeInTheDocument();
-    expect(screen.getByText('LLM Synthesis')).toBeInTheDocument();
-  });
-
-  it('shows timing stages with correct ms labels for resolver fixture', async () => {
-    render(<CodebaseChat repoId={1} repoName="nishtha911/RepoScope" offlinePreview />);
-
-    const chip = screen.getByRole('button', {
-      name: /How does the two-pass AST reference resolver work\?/i,
-    });
-    fireEvent.click(chip);
-
-    await act(async () => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    // Resolver fixture: retrieval=29, expansion=11, synthesis=78, total=118
-    expect(screen.getByText('29ms')).toBeInTheDocument();
-    expect(screen.getByText('11ms')).toBeInTheDocument();
-    expect(screen.getByText('78ms')).toBeInTheDocument();
-    // Total = 29+11+78 = 118
-    expect(screen.getAllByText('118ms').length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('wires online mode to POST /api/repos/{id}/ask and maps timings from response', async () => {
-    const mockTimings = { retrieval_ms: 50, expansion_ms: 20, synthesis_ms: 130 };
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          answer: 'Live answer from the API.',
-          evidence: [],
-          gaps: [],
-          timings: mockTimings,
-        }),
-      }),
-    );
-
-    render(
-      <CodebaseChat
-        repoId={42}
-        repoName="nishtha911/RepoScope"
-        offlinePreview={false}
-        apiBase="http://localhost:8000/api"
-      />,
-    );
-
-    const textarea = screen.getByRole('textbox', {
-      name: /Ask a question about the repository/i,
-    });
-    fireEvent.change(textarea, { target: { value: 'What is the blast radius?' } });
-    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-
-    await act(async () => {
-      vi.runAllTimers();
-    });
-
-    // Answer rendered
-    expect(await screen.findByText('Live answer from the API.')).toBeInTheDocument();
-
-    // Correct endpoint called
-    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
-      'http://localhost:8000/api/repos/42/ask',
-      expect.objectContaining({ method: 'POST' }),
-    );
-
-    // Timing breakdown rendered
-    expect(screen.getByText('50ms')).toBeInTheDocument();
-    expect(screen.getByText('20ms')).toBeInTheDocument();
-    expect(screen.getByText('130ms')).toBeInTheDocument();
-    // Total = 200ms
-    expect(screen.getByText('200ms')).toBeInTheDocument();
   });
 });

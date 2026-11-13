@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchSymbolDetail,
   fetchSymbolNeighbors,
-  fetchSymbols,
   SymbolsApiError,
 } from '../api/symbols';
 import type {
@@ -11,6 +10,12 @@ import type {
   SymbolDetailResponse,
   SymbolKind,
 } from '../api/symbols';
+import {
+  fixtureSymbolDetail,
+  fixtureUpstreamNeighbors,
+  fixtureDownstreamNeighbors,
+} from '../fixtures/symbolDetail';
+import { codePreview } from '../fixtures/codePreview';
 import CodeViewer from './CodeViewer';
 import ErrorBoundary from './ErrorBoundary';
 import './SymbolDetail.css';
@@ -19,7 +24,6 @@ interface Props {
   symbolId: number;
   repoId?: number;
   repoName?: string;
-  /** @deprecated Live API is always used. Retained for compatibility with callers. */
   offlinePreview?: boolean;
   apiBase?: string;
   onSelectSymbol?: (symbolId: number) => void;
@@ -38,22 +42,24 @@ const kindLabels: Record<SymbolKind, string> = {
   variable: 'Variable',
 };
 
+const knownDemoSymbols: { id: number; label: string }[] = [
+  { id: 101, label: '#101 — SymbolResolver.resolve_calls (Method)' },
+  { id: 204, label: '#204 — SymbolScanner.scan (Method)' },
+  { id: 305, label: '#305 — ReferenceResolver.resolve (Function)' },
+];
+
 export default function SymbolDetail({
   symbolId,
   repoId = 1,
   repoName = 'nishtha911/RepoScope',
+  offlinePreview = false,
   apiBase,
   onSelectSymbol,
   onBackToOverview,
 }: Props) {
   const [filter, setFilter] = useState<DirectionFilter>('ALL');
+
   const validSymbolId = Number.isSafeInteger(symbolId) && symbolId > 0;
-  const symbolsQuery = useQuery({
-    queryKey: ['symbols', repoId, apiBase ?? 'default'],
-    queryFn: ({ signal }) => fetchSymbols({ repoId, query: '', limit: 100, signal, apiBase }),
-    enabled: validSymbolId,
-    retry: false,
-  });
 
   // Query 1: Symbol detail metadata
   const detailQuery = useQuery({
@@ -64,7 +70,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: validSymbolId,
+    enabled: !offlinePreview && validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -80,7 +86,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: validSymbolId,
+    enabled: !offlinePreview && validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -96,7 +102,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: validSymbolId,
+    enabled: !offlinePreview && validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -107,14 +113,56 @@ export default function SymbolDetail({
   let upstreamCallers: Neighbor[] = [];
   let downstreamCallees: Neighbor[] = [];
 
-  detail = detailQuery.data;
-  upstreamCallers = upstreamQuery.data?.neighbors ?? [];
-  downstreamCallees = downstreamQuery.data?.neighbors ?? [];
+  if (offlinePreview) {
+    if (symbolId === 204) {
+      detail = {
+        id: 204,
+        file_id: 11,
+        name: 'scan',
+        qualname: 'SymbolScanner.scan',
+        kind: 'method',
+        file_path: 'backend/reposcope/ingestion/scanner.py',
+        start_line: 55,
+        end_line: 98,
+        signature: 'def scan(self, directory: Path) -> ScanResult:',
+        docstring: 'Scans a repository filesystem tree and collects source files.',
+        cyclomatic_complexity: 6,
+      };
+      upstreamCallers = [
+        {
+          symbol_id: 501,
+          name: 'main.run_scan',
+          relationship_type: 'CALLS',
+          confidence: 0.88,
+          direction: 'in',
+        },
+      ];
+      downstreamCallees = [
+        {
+          symbol_id: 101,
+          name: 'SymbolResolver.resolve_calls',
+          relationship_type: 'CALLS',
+          confidence: 1.0,
+          direction: 'out',
+        },
+      ];
+    } else {
+      detail = { ...fixtureSymbolDetail, id: symbolId };
+      upstreamCallers = fixtureUpstreamNeighbors;
+      downstreamCallees = fixtureDownstreamNeighbors;
+    }
+  } else {
+    detail = detailQuery.data;
+    upstreamCallers = upstreamQuery.data?.neighbors ?? [];
+    downstreamCallees = downstreamQuery.data?.neighbors ?? [];
+  }
 
   const isLoading =
+    !offlinePreview &&
     (detailQuery.isPending || upstreamQuery.isPending || downstreamQuery.isPending);
 
   const isError =
+    !offlinePreview &&
     (detailQuery.isError || upstreamQuery.isError || downstreamQuery.isError);
 
   const error =
@@ -205,9 +253,9 @@ export default function SymbolDetail({
               value={symbolId}
               onChange={(e) => onSelectSymbol?.(Number(e.target.value))}
             >
-              {symbolsQuery.data?.symbols.map((item) => (
+              {knownDemoSymbols.map((item) => (
                 <option key={item.id} value={item.id}>
-                  #{item.id} — {item.qualname} ({item.kind})
+                  {item.label}
                 </option>
               ))}
             </select>
@@ -224,7 +272,7 @@ export default function SymbolDetail({
           )}
 
           <span className="symbol-detail__badge">
-            LIVE API
+            {offlinePreview ? 'OFFLINE FIXTURE' : 'LIVE API'}
           </span>
         </div>
       </header>
@@ -482,12 +530,13 @@ export default function SymbolDetail({
 
             <ErrorBoundary key={detail.id}>
               <CodeViewer
-                code={null}
+                code={codePreview.code}
                 filePath={detail.file_path}
                 language="python"
                 startLine={detail.start_line}
                 highlightStart={detail.start_line}
                 highlightEnd={detail.end_line}
+                isFixture={offlinePreview}
               />
             </ErrorBoundary>
           </div>
@@ -496,3 +545,4 @@ export default function SymbolDetail({
     </section>
   );
 }
+

@@ -1,9 +1,6 @@
-/* Footer - Bauhaus Grid Design */
-
 .site-footer {
-  border-top: var(--border-thin);
-  background-color: #000000;
-  color: #ffffff;
+  border-top: 3px solid #000000;
+  background-color: #ffffff;
   margin-top: auto;
 }
 
@@ -11,9 +8,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
+  padding: 14px 32px;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* Left side */
@@ -25,16 +22,16 @@
 
 .site-footer__logo {
   font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: #ffffff;
+  color: #000000;
 }
 
 .site-footer__copy {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #a3a3a3;
+  color: #888888;
 }
 
 /* Right side */
@@ -47,28 +44,26 @@
 .site-footer__status-text {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #f5f5f5;
-  font-weight: 600;
+  color: #555555;
 }
 
 /* Status dots */
 .footer__dot {
   display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 0;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
 .footer__dot--online {
-  background-color: #22c55e;
+  background-color: #16a34a;
 }
 
 .footer__dot--offline {
-  background-color: #facc15;
+  background-color: #d97706;
 }
 
 .footer__dot--error {
-  background-color: #ef4444;
+  background-color: #dc2626;
 }

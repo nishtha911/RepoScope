@@ -1,4 +1,4 @@
-import type { CitationEvidence, ChatMessage, AskTimings } from '../types/chat';
+import type { CitationEvidence, ChatMessage } from '../types/chat';
 
 export const fixtureEvidence: Record<string, CitationEvidence> = {
   E1: {
@@ -114,7 +114,6 @@ export const fixturePromptResponses: Record<
     content: string;
     citations: Record<string, CitationEvidence>;
     latencyMs: number;
-    timings: AskTimings;
   }
 > = {
   default: {
@@ -132,7 +131,6 @@ RepoScope executes a multi-stage code intelligence workflow:
    Responses are synthesized with strict citation grounding [E3], preventing hallucination by guaranteeing that all cited IDs $[E1], [E2]$ reference real stored chunks.`,
     citations: fixtureEvidence,
     latencyMs: 142,
-    timings: { retrieval_ms: 38, expansion_ms: 14, synthesis_ms: 90 },
   },
   resolver: {
     content: `### Two-Pass Reference Resolver
@@ -163,7 +161,6 @@ Edges are classified into:
       E1: fixtureEvidence.E1,
     },
     latencyMs: 118,
-    timings: { retrieval_ms: 29, expansion_ms: 11, synthesis_ms: 78 },
   },
   search: {
     content: `### Reciprocal Rank Fusion (RRF) Search
@@ -192,7 +189,6 @@ This ensures robust ranking even when vector similarity scores and BM25 scores h
       E4: fixtureEvidence.E4,
     },
     latencyMs: 135,
-    timings: { retrieval_ms: 44, expansion_ms: 18, synthesis_ms: 73 },
   },
   evidence: {
     content: `### Evidence Pack Validation Contract
@@ -208,6 +204,5 @@ Whenever a claim cannot be verified against retrieved chunks, the serializer emi
       E3: fixtureEvidence.E3,
     },
     latencyMs: 98,
-    timings: { retrieval_ms: 22, expansion_ms: 9, synthesis_ms: 67 },
   },
 };
