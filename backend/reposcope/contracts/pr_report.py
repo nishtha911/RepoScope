@@ -18,6 +18,10 @@ class PRImpactReport(BaseModel):
     affected_endpoints_count: int = Field(ge=0)
     impacted_tests_count: int = Field(ge=0)
     summary: str = Field(default="")
+    impacted_tests: list[dict[str, Any]] = Field(default_factory=list)
+    missing_tests: list[dict[str, Any]] = Field(default_factory=list)
+    impacted_endpoints: list[dict[str, Any]] = Field(default_factory=list)
+    feedback: Literal["pending", "accepted", "dismissed"] = "pending"
 
 
 class PRReportMetrics(BaseModel):

@@ -29,12 +29,16 @@ def fake_embeddings(monkeypatch):
 
 
 def make_session(dialect_name="postgresql"):
-    session = Mock()
+    from reposcope.retrieval.gemini_embeddings import INDEX_VERSION
 
+    session = Mock()
     session.get_bind.return_value = SimpleNamespace(
         dialect=SimpleNamespace(name=dialect_name),
     )
 
+    session.execute.return_value.all.return_value = [
+        (7, INDEX_VERSION, "ready"),
+    ]
     session.scalars.return_value = []
 
     return session

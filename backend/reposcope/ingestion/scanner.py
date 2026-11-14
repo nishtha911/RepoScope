@@ -3,6 +3,10 @@ import os
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from .redaction import redact_secrets
+
+
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 # Common programming extensions
 LANGUAGE_BY_EXTENSION = {
@@ -50,10 +54,21 @@ class ScannedFile:
     size_bytes: int
 
 
-def scan_repository(repo_dir: Path | str) -> list[ScannedFile]:
+def scan_repository(
+    repo_dir: Path | str,
+    *,
+    max_file_size_bytes: int = MAX_FILE_SIZE_BYTES,
+) -> list[ScannedFile]:
     """
-    Scans repository files, skips symlinks, detects extensions, and computes SHA-256 hashes.
+    Scans supported files with symlink and size guards.
+
+    Content is redacted before hashing so downstream persistence never receives
+    the most common credential formats. Files over the configured limit are
+    skipped without being read into memory.
     """
+    if type(max_file_size_bytes) is not int or max_file_size_bytes < 1:
+        raise ValueError("max_file_size_bytes must be a positive integer")
+
     base_path = Path(repo_dir).resolve()
     if not base_path.exists() or not base_path.is_dir():
         raise ValueError(f"Invalid repository directory: {repo_dir}")
@@ -62,7 +77,10 @@ def scan_repository(repo_dir: Path | str) -> list[ScannedFile]:
 
     for root, dirs, files in os.walk(base_path, followlinks=False):
         # Skip hidden directories like .git
-        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        dirs[:] = [
+            d for d in dirs
+            if not d.startswith(".") and not (Path(root) / d).is_symlink()
+        ]
 
         for filename in files:
             file_path = Path(root) / filename
@@ -76,11 +94,13 @@ def scan_repository(repo_dir: Path | str) -> list[ScannedFile]:
                 continue
 
             try:
+                if file_path.stat().st_size > max_file_size_bytes:
+                    continue
                 content = file_path.read_bytes()
             except (OSError, PermissionError):
                 continue
 
-            content_hash = hash_content(content)
+            content_hash = hash_content(redact_secrets(content))
             rel_path = file_path.relative_to(base_path).as_posix()
 
             results.append(
