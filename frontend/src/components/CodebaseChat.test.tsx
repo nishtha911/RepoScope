@@ -43,7 +43,7 @@ describe('CodebaseChat', () => {
     expect(screen.getByText('How does the resolver work?')).toBeInTheDocument();
 
     // Streaming begins
-    expect(screen.getByText(/GENERATING STREAMING EVIDENCE RESPONSE/i)).toBeInTheDocument();
+    expect(screen.getByText(/SIMULATING FIXTURE RESPONSE/i)).toBeInTheDocument();
 
     // Advance timers through streaming completion
     await act(async () => {

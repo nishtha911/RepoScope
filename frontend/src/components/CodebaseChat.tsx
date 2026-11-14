@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { ChatMessage, CitationEvidence } from '../types/chat';
+import type { ChatMessage } from '../types/chat';
+import { askRepo } from '../api/ask';
 import {
   initialChatMessages,
   sampleStarterPrompts,
   fixturePromptResponses,
-  fixtureEvidence,
 } from '../fixtures/chat';
 import MarkdownRenderer from './MarkdownRenderer';
 import './CodebaseChat.css';
@@ -34,11 +34,12 @@ function pickFixtureResponse(query: string) {
 export const CodebaseChat: React.FC<Props> = ({
   repoId,
   repoName,
-  apiBase = 'http://localhost:8000/api',
-  offlinePreview = true,
+  apiBase = '/api',
+  offlinePreview = false,
   onSelectSymbol,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(offlinePreview ? initialChatMessages : []);
+  const [messageGaps, setMessageGaps] = useState<Record<string, string[]>>({});
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedDrawers, setExpandedDrawers] = useState<Record<string, boolean>>({});
@@ -95,9 +96,10 @@ export const CodebaseChat: React.FC<Props> = ({
 
   const handleClearChat = useCallback(() => {
     handleStopGeneration();
-    setMessages(initialChatMessages);
+    setMessages(offlinePreview ? initialChatMessages : []);
+    setMessageGaps({});
     setExpandedDrawers({});
-  }, [handleStopGeneration]);
+  }, [handleStopGeneration, offlinePreview]);
 
   const executeSendMessage = useCallback(
     async (queryText: string) => {
@@ -184,25 +186,13 @@ export const CodebaseChat: React.FC<Props> = ({
         const startTime = performance.now();
 
         try {
-          const response = await fetch(`${apiBase}/repos/${repoId}/ask`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: trimmed }),
-            signal: controller.signal,
+          const data = await askRepo({
+            repoId, question: trimmed, apiBase, signal: controller.signal,
           });
-
           const elapsed = Math.round(performance.now() - startTime);
-
-          if (!response.ok) {
-            throw new Error(
-              `API returned status ${response.status}: ${response.statusText}`,
-            );
-          }
-
-          const data = await response.json();
-          const content = data.answer || data.content || 'No response generated.';
-          const citations: Record<string, CitationEvidence> =
-            data.citations || fixtureEvidence;
+          const content = data.answer;
+          const citations = data.citations;
+          setMessageGaps((previous) => ({ ...previous, [assistantMessageId]: data.gaps }));
 
           setMessages((prev) =>
             prev.map((msg) =>
@@ -347,10 +337,21 @@ export const CodebaseChat: React.FC<Props> = ({
                     )}
                   </div>
 
+                  {!message.isStreaming && (messageGaps[message.id]?.length ?? 0) > 0 && (
+                    <section aria-label="Evidence gaps" style={{ marginTop: '16px', padding: '12px', border: '1px solid #d97706', background: '#fffbeb' }}>
+                      <h4 style={{ margin: '0 0 8px' }}>Evidence gaps</h4>
+                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {messageGaps[message.id].map((gap, index) => (
+                          <li key={`${message.id}-gap-${index}`}>{gap}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
                   {/* STREAMING STATUS BAR & STOP BUTTON */}
                   {message.isStreaming && (
                     <div className="chat-bubble__streaming-bar">
-                      <span>⚡ GENERATING STREAMING EVIDENCE RESPONSE…</span>
+                      <span>{offlinePreview ? 'SIMULATING FIXTURE RESPONSE…' : 'WAITING FOR SERVER RESPONSE…'}</span>
                       <button
                         type="button"
                         className="chat-bubble__stop-btn"
@@ -484,7 +485,7 @@ export const CodebaseChat: React.FC<Props> = ({
           onKeyDown={handleKeyDown}
           placeholder="Ask a question about symbols, architecture, citations, or endpoints (e.g., 'How does the resolver work?')..."
           rows={3}
-          maxLength={4000}
+          maxLength={4096}
           aria-label="Ask a question about the repository"
         />
 

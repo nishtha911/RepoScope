@@ -8,12 +8,12 @@ import CodebaseChat from './components/CodebaseChat';
 import Footer from './components/Footer';
 import AppNav, { type Tab } from './components/AppNav';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
 const mockRepos = [
   {
-    id: 1,
-    name: 'nishtha911/RepoScope',
+    id: 33,
+    name: 'Staging repository #33',
   },
 ];
 
@@ -92,12 +92,12 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('OVERVIEW');
-  const [selectedRepoId, setSelectedRepoId] = useState(1);
+  const [selectedRepoId, setSelectedRepoId] = useState(33);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLatencyMs, setSearchLatencyMs] = useState<number | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState('');
-  const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(101);
+  const [inspectedSymbolId, setInspectedSymbolId] = useState<number>(75);
 
   // Global Bauhaus keyboard shortcuts (Cmd/Ctrl + K for search, / for chat)
   useEffect(() => {
@@ -561,6 +561,20 @@ export default function App() {
           : '◎ API mode — health, registration, and symbol search use live HTTP requests. Dashboard metrics are illustrative fixtures.'}
       </div>
 
+      {!offlinePreview && (
+        <section aria-label="Staging authentication" style={{ padding: '12px 32px', background: '#eff6ff', borderBottom: '1px solid #bfdbfe' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+            Staging repository #33.{' '}
+            <a href={`${API_BASE}/staging-login`} style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
+              Sign in to the staging API
+            </a>
+            {' '}before using search or chat. Enter your staging credentials in the browser prompt,
+            then use the browser Back button to return here. API health does not verify sign-in.
+            Dashboard examples remain synthetic; live answers use server-provided evidence only.
+          </p>
+        </section>
+      )}
+
       {/* NAVIGATION */}
       <AppNav activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -1002,6 +1016,7 @@ export default function App() {
         {/* RAG CODEBASE CHAT */}
         {activeTab === 'RAG' && (
           <CodebaseChat
+                  key={`${selectedRepoId}-${offlinePreview}`}
             repoId={selectedRepoId}
             repoName={selectedRepo.name}
             apiBase={API_BASE}
