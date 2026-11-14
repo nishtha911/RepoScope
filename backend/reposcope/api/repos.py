@@ -2,7 +2,7 @@
 import re
 import hashlib
 from typing import Annotated, Literal
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 
 from fastapi import APIRouter, HTTPException, Path, Query, status
 
@@ -18,6 +18,8 @@ from reposcope.contracts.pr_report import PRImpactReport
 from reposcope.contracts.vocabulary import Direction, EdgeKind, SymbolKind
 from typing import get_args
 from reposcope.db.session import SessionLocal
+from reposcope.ingestion.index_preparation import INDEX_VERSION
+from reposcope.jobs.queue import enqueue_job
 from reposcope.models import (
     Edge,
     File,
@@ -33,17 +35,72 @@ PathID = Annotated[int, Path(gt=0)]
 
 @router.post("/repos", status_code=status.HTTP_202_ACCEPTED, response_model=RegisterRepoResponse)
 def register_repo(payload: RegisterRepoRequest) -> RegisterRepoResponse:
+    # Request validation already restricts URLs to credential-free github.com HTTPS.
+    parts = str(payload.url).rstrip("/").split("/")[-2:]
+    owner, repository_name = parts
+    if repository_name.endswith(".git"):
+        repository_name = repository_name[:-4]
+    if (len(owner) > 39 or not 1 <= len(repository_name) <= 100
+            or repository_name in {".", ".."}):
+        raise HTTPException(status_code=422, detail="Unsupported GitHub repository name")
+    full_name = f"{owner}/{repository_name}".lower()
+    canonical_url = f"https://github.com/{full_name}"
+    lock_key = int.from_bytes(hashlib.sha256(full_name.encode()).digest()[:8],
+                              byteorder="big", signed=True)
+
     with SessionLocal.begin() as session:
-        existing = session.scalar(
-            select(RepositoryRecord).where(RepositoryRecord.remote_url == str(payload.url))
-        )
-        if existing:
-            return RegisterRepoResponse(repo_id=existing.id, status="pending", message="Repository is already registered")
-        name = str(payload.url).rstrip("/").split("/")[-2:]
-        record = RepositoryRecord(full_name="/".join(name), remote_url=str(payload.url))
-        session.add(record)
-        session.flush()
-        return RegisterRepoResponse(repo_id=record.id, status="pending", message="Repository registered")
+        # PostgreSQL-only registration: serialize canonical URL variants across
+        # API replicas. The transaction releases this advisory lock automatically.
+        session.execute(text("SET LOCAL lock_timeout = '5s'"))
+        session.execute(text("SET LOCAL statement_timeout = '15s'"))
+        session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+        matches = session.scalars(select(RepositoryRecord).where(or_(
+            func.lower(RepositoryRecord.full_name) == full_name,
+            func.lower(func.rtrim(RepositoryRecord.remote_url, "/")).in_(
+                [canonical_url, canonical_url + ".git"]),
+        )).with_for_update()).all()
+        if len(matches) > 1:
+            raise HTTPException(status_code=409, detail="Duplicate repository records require review")
+        if matches:
+            record = matches[0]
+            existing_url = record.remote_url.rstrip("/")
+            if existing_url.endswith(".git"):
+                existing_url = existing_url[:-4]
+            if existing_url.lower() != canonical_url:
+                raise HTTPException(status_code=409, detail="Existing repository URL requires review")
+        else:
+            record = RepositoryRecord(full_name=full_name, remote_url=canonical_url)
+            session.add(record)
+            session.flush()
+
+        ready = session.scalar(select(RepositorySnapshot.id).where(
+            RepositorySnapshot.repository_id == record.id,
+            RepositorySnapshot.status == "ready").limit(1))
+        if ready is not None:
+            return RegisterRepoResponse(repo_id=record.id, status="pending",
+                message="Repository is already indexed; fetch repository details for its current state")
+
+        file_count = session.scalar(select(func.count(File.id)).where(File.repository_id == record.id))
+        if file_count:
+            raise HTTPException(status_code=409,
+                detail="Repository has existing files without a ready index; review before ingestion")
+        active = session.execute(text("""
+            SELECT id, status FROM ingestion_jobs
+            WHERE repository_id=:repo AND status IN ('queued', 'running')
+            ORDER BY id LIMIT 1
+        """), {"repo": record.id}).mappings().one_or_none()
+        if active is not None:
+            return RegisterRepoResponse(repo_id=record.id, status="pending",
+                message=f"Ingestion job {active['id']} is {active['status']}; fetch repository details for progress")
+
+        job_id = enqueue_job(session, record.id, f"register:{INDEX_VERSION}", max_attempts=3)
+        job_status = session.execute(text("SELECT status FROM ingestion_jobs WHERE id=:id"),
+                                     {"id": job_id}).scalar_one()
+        if job_status not in {"queued", "running"}:
+            raise HTTPException(status_code=409,
+                detail="Previous ingestion job is terminal; review it before requesting a retry")
+        return RegisterRepoResponse(repo_id=record.id, status="pending",
+            message=f"Repository registered; ingestion job {job_id} is {job_status}")
 
 
 @router.get("/repos/{repo_id}", response_model=RepositoryResponse)
@@ -67,7 +124,8 @@ def get_repo(repo_id: PathID) -> RepositoryResponse:
             default_branch="main", status=snapshot.status if snapshot else "pending",
             head_sha=snapshot.commit_sha if snapshot else None,
             snapshot_id=snapshot.id if snapshot else None,
-            symbol_count=symbol_count or 0, file_count=file_count or 0,
+            symbol_count=(symbol_count or 0) if snapshot else None,
+            file_count=(file_count or 0) if snapshot else None,
         )
 
 

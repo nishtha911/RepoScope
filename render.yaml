@@ -1,0 +1,30 @@
+# Feasibility experiment only: one API + one worker share a free web service.
+# No database, paid worker, persistent disk, or pre-deploy migration is created.
+services:
+  - type: web
+    name: reposcope-staging
+    runtime: python
+    plan: free
+    region: singapore
+    branch: feature/staging-validation
+    rootDir: backend
+    autoDeployTrigger: "off"
+    buildCommand: python render_build.py
+    startCommand: python -m reposcope.staging_launcher
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: REPOSCOPE_EXPECTED_DB_HOST
+        value: ep-bitter-smoke-azi1lfxy.c-3.ap-southeast-1.aws.neon.tech
+      - key: STAGING_USERNAME
+        value: staging
+      - key: STAGING_PASSWORD
+        generateValue: true
+      - key: STAGING_CORS_ORIGINS
+        value: ""
