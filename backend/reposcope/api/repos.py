@@ -3,6 +3,7 @@ import re
 import hashlib
 from typing import Annotated, Literal
 from sqlalchemy import func, or_, select, text
+from sqlalchemy.orm import aliased
 
 from fastapi import APIRouter, HTTPException, Path, Query, status
 
@@ -412,23 +413,36 @@ def get_symbol_neighbors(
     direction: Annotated[Direction, Query(alias="dir")] = "out",
     types: Annotated[str, Query(max_length=200)] = "",
 ) -> NeighborsResponse:
+    allowed = tuple(get_args(EdgeKind))
     selected = [part.strip() for part in types.split(",")] if types else []
-    if any(kind not in get_args(EdgeKind) for kind in selected):
+    if any(kind not in allowed for kind in selected):
         raise HTTPException(status_code=422, detail="types must be comma-separated allowed edge kinds")
+    requested = tuple(selected) if selected else allowed
+    anchor = aliased(Symbol)
+    anchor_file = aliased(File)
+    neighbor_file = aliased(File)
+    anchor_id = Edge.source_symbol_id if direction == "out" else Edge.target_symbol_id
+    neighbor_id = Edge.target_symbol_id if direction == "out" else Edge.source_symbol_id
     with SessionLocal() as session:
         statement = (
             select(Edge, Symbol)
-            .join(Symbol, Symbol.id == (Edge.target_symbol_id if direction == "in" else Edge.source_symbol_id))
-            .where((Edge.target_symbol_id if direction == "in" else Edge.source_symbol_id) == symbol_id)
+            .join(Symbol, Symbol.id == neighbor_id)
+            .join(anchor, anchor.id == anchor_id)
+            .join(anchor_file, anchor_file.id == anchor.file_id)
+            .join(neighbor_file, neighbor_file.id == Symbol.file_id)
+            .where(anchor.id == symbol_id,
+                   anchor_file.repository_id == neighbor_file.repository_id,
+                   Edge.kind.in_(requested))
+            .order_by(Edge.id, Symbol.id)
         )
-        if selected:
-            statement = statement.where(Edge.kind.in_(selected))
         rows = session.execute(statement).all()
         return NeighborsResponse(neighbors=[
             Neighbor(symbol_id=s.id, name=s.qualname or s.name,
                 relationship_type=edge.kind, confidence=edge.confidence,
                 direction=direction)
-            for edge, s in rows
+            # Also enforce the public vocabulary at serialization. CONTAINS
+            # remains stored internally; it is not renamed to another relation.
+            for edge, s in rows if edge.kind in requested
         ])
 
 
