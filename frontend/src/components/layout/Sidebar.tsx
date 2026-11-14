@@ -31,6 +31,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   repository,
   onChangeRepository,
 }) => {
+  const ingestionStatus = repository.ingestion_status ?? repository.status;
+  const statusTone = repository.status === 'ready' ? 'ready' : ingestionStatus;
+  const progress = repository.ingestion_progress_percent;
   const navItems = [
     {
       id: 'OVERVIEW' as NavTab,
@@ -94,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="reposcope-sidebar__repo-info">
             <span className="reposcope-sidebar__repo-name">{repository.name}</span>
             <span className="reposcope-sidebar__repo-visibility">
-              {repository.status}
+              {ingestionStatus}
             </span>
           </div>
           <ChevronDown size={14} className="reposcope-sidebar__repo-chevron" />
@@ -131,19 +134,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="reposcope-sidebar__index-card" aria-live="polite">
           <div className="reposcope-sidebar__index-header">
             <span
-              className={`reposcope-sidebar__status-dot reposcope-sidebar__status-dot--${repository.status}`}
+              className={`reposcope-sidebar__status-dot reposcope-sidebar__status-dot--${statusTone}`}
               aria-hidden="true"
             />
             <span className="reposcope-sidebar__index-status">
-              {repository.status === 'ready' ? 'Index up to date' : `Index ${repository.status}`}
+              {repository.status === 'ready'
+                ? 'Index up to date'
+                : `${repository.ingestion_stage ?? 'Index'} ${progress}%`}
             </span>
           </div>
           <p className="reposcope-sidebar__index-synced">
             {repository.file_count ?? 0} files · {repository.symbol_count ?? 0} symbols
           </p>
+          {repository.ingestion_status === 'failed' && repository.ingestion_error && (
+            <p className="reposcope-sidebar__index-synced" role="alert">
+              Ingestion failed: {repository.ingestion_error}
+            </p>
+          )}
           <div className="reposcope-sidebar__index-commit">
             <span>{repository.default_branch} · {repository.head_sha?.slice(0, 7) ?? 'pending'}</span>
-            <div className="reposcope-sidebar__index-bar" />
+            <div
+              className="reposcope-sidebar__index-bar"
+              style={{ width: `${progress}%` }}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Ingestion progress ${progress}%`}
+            />
           </div>
         </div>
 

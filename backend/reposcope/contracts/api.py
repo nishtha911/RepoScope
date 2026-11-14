@@ -56,6 +56,11 @@ class RepositoryResponse(Repository):
     snapshot_id: PositiveID | None
     file_count: int | None = Field(ge=0)
     symbol_count: int | None = Field(ge=0)
+    ingestion_job_id: PositiveID | None = None
+    ingestion_status: Literal["queued", "running", "succeeded", "failed"] | None = None
+    ingestion_progress_percent: int = Field(default=0, ge=0, le=100)
+    ingestion_stage: str | None = Field(default=None, max_length=40)
+    ingestion_error: str | None = None
 
     @model_validator(mode="after")
     def validate_snapshot_context(self) -> Self:

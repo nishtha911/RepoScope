@@ -138,6 +138,13 @@ def get_repo(repo_id: PathID) -> RepositoryResponse:
             select(func.count(Symbol.id)).join(File, Symbol.file_id == File.id)
             .where(File.repository_id == repo_id)
         )
+        ingestion_job = session.execute(text("""
+            SELECT id, status, progress_percent, progress_stage, error_message
+            FROM ingestion_jobs
+            WHERE repository_id = :repo_id
+            ORDER BY id DESC
+            LIMIT 1
+        """), {"repo_id": repo_id}).mappings().one_or_none()
         return RepositoryResponse(
             id=record.id, url=record.remote_url, name=record.full_name,
             default_branch="main", status=snapshot.status if snapshot else "pending",
@@ -145,6 +152,11 @@ def get_repo(repo_id: PathID) -> RepositoryResponse:
             snapshot_id=snapshot.id if snapshot else None,
             symbol_count=(symbol_count or 0) if snapshot else None,
             file_count=(file_count or 0) if snapshot else None,
+            ingestion_job_id=ingestion_job["id"] if ingestion_job else None,
+            ingestion_status=ingestion_job["status"] if ingestion_job else None,
+            ingestion_progress_percent=ingestion_job["progress_percent"] if ingestion_job else 0,
+            ingestion_stage=ingestion_job["progress_stage"] if ingestion_job else None,
+            ingestion_error=ingestion_job["error_message"] if ingestion_job else None,
         )
 
 

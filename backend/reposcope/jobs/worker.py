@@ -29,6 +29,7 @@ from reposcope.ingestion.index_preparation import prepare_python_index
 from reposcope.ingestion.publishing import PublishedIndex, publish_prepared_index
 from reposcope.jobs.queue import (
     LeaseLostError, claim_next_job, mark_job_failed, renew_job_lease,
+    update_job_progress,
 )
 
 
@@ -58,6 +59,7 @@ class WorkerServices:
     prepare: Callable
     publish: Callable
     read_commit: Callable
+    progress: Callable | None = None
 
 
 @dataclass(frozen=True)
@@ -191,13 +193,22 @@ def build_services(session_factory) -> WorkerServices:
                 raise ValueError("Repository no longer exists")
             return repository.remote_url
 
+    def progress(job, progress_percent, progress_stage):
+        from sqlalchemy import text
+        with session_factory.begin() as session:
+            session.execute(text("SET LOCAL lock_timeout = '2s'"))
+            session.execute(text("SET LOCAL statement_timeout = '5s'"))
+            update_job_progress(session, job, progress_percent=progress_percent,
+                                progress_stage=progress_stage)
+
     def publish(job, prepared, commit_sha):
         return publish_prepared_index(job, prepared, commit_sha=commit_sha,
                                       session_factory=session_factory)
 
     return WorkerServices(claim=claim, renew=renew, fail=fail,
         repository_url=repository_url, clone=clone_repository,
-        prepare=prepare_python_index, publish=publish, read_commit=read_git_commit)
+        prepare=prepare_python_index, publish=publish, read_commit=read_git_commit,
+        progress=progress)
 
 
 def run_once(services: WorkerServices, workspace, *, repository_id=None,
@@ -256,14 +267,20 @@ def run_once(services: WorkerServices, workspace, *, repository_id=None,
         _reject_linked_components(cloned)
         if cloned.resolve(strict=True) != destination:
             raise ValueError("Clone returned an unexpected destination")
+        if services.progress is not None:
+            services.progress(job, 20, "scanning")
         checkpoint()
         commit_sha = services.read_commit(cloned)
+        if services.progress is not None:
+            services.progress(job, 30, "indexing")
         prepared = services.prepare(cloned, check_cancelled=checkpoint)
         checkpoint()
         if services.read_commit(cloned) != commit_sha:
             raise CommitIdentityError("Clone HEAD changed during preparation")
         heartbeat.stop()
         checkpoint()
+        if services.progress is not None:
+            services.progress(job, 90, "publishing")
         services.renew(job, lease_seconds)
         checkpoint()
         published = services.publish(job, prepared, commit_sha)

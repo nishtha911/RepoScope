@@ -96,6 +96,8 @@ def claim_next_job(session: Session, *, lease_seconds: int = 300,
         )
         UPDATE ingestion_jobs AS j
         SET status = 'running', attempts = j.attempts + 1,
+            progress_percent = 0,
+            progress_stage = 'cloning',
             lease_token = :token,
             leased_until = clock_timestamp() + make_interval(secs => :seconds),
             updated_at = clock_timestamp(), finished_at = NULL
@@ -105,6 +107,22 @@ def claim_next_job(session: Session, *, lease_seconds: int = 300,
     """), {"repository_id": repository_id, "seconds": lease_seconds,
              "token": str(uuid4())}).mappings().one_or_none()
     return ClaimedJob(**dict(row)) if row else None
+
+
+def update_job_progress(session: Session, job: ClaimedJob, *,
+                        progress_percent: int, progress_stage: str) -> None:
+    if type(progress_percent) is not int or not 0 <= progress_percent <= 100:
+        raise ValueError("progress_percent must be an integer from 0 to 100")
+    if not isinstance(progress_stage, str) or not progress_stage.strip() or len(progress_stage) > 40:
+        raise ValueError("progress_stage must be a nonblank string of at most 40 characters")
+    _owned_update(session, """
+        UPDATE ingestion_jobs
+        SET progress_percent = :progress_percent, progress_stage = :progress_stage,
+            updated_at = clock_timestamp()
+        WHERE id = :id AND status = 'running' AND lease_token = :token
+          AND leased_until > clock_timestamp()
+        RETURNING id
+    """, job, progress_percent=progress_percent, progress_stage=progress_stage)
 
 
 def _owned_update(session: Session, statement: str, job: ClaimedJob, **params) -> None:
@@ -130,6 +148,7 @@ def mark_job_succeeded(session: Session, job: ClaimedJob) -> None:
     _owned_update(session, """
         UPDATE ingestion_jobs
         SET status = 'succeeded', lease_token = NULL, leased_until = NULL,
+            progress_percent = 100, progress_stage = 'complete',
             error_message = NULL, finished_at = clock_timestamp(),
             updated_at = clock_timestamp()
         WHERE id = :id AND status = 'running' AND lease_token = :token
