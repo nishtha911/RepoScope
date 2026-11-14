@@ -16,7 +16,9 @@ from reposcope.staging_access import allowed_origins, credentials
 
 def load_settings(environ):
     credentials(environ)
-    allowed_origins(environ.get("STAGING_CORS_ORIGINS", ""))
+    allowed_origins(
+        environ.get("STAGING_CORS_ORIGINS", environ.get("CORS_ORIGINS", ""))
+    )
     from sqlalchemy.engine import make_url
     try:
         url = make_url(environ.get("DATABASE_URL", ""))

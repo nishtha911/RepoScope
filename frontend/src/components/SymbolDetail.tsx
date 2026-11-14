@@ -10,14 +10,6 @@ import type {
   SymbolDetailResponse,
   SymbolKind,
 } from '../api/symbols';
-import {
-  fixtureSymbolDetail,
-  fixtureUpstreamNeighbors,
-  fixtureDownstreamNeighbors,
-} from '../fixtures/symbolDetail';
-import { codePreview } from '../fixtures/codePreview';
-import CodeViewer from './CodeViewer';
-import ErrorBoundary from './ErrorBoundary';
 import './SymbolDetail.css';
 
 interface Props {
@@ -42,17 +34,10 @@ const kindLabels: Record<SymbolKind, string> = {
   variable: 'Variable',
 };
 
-const knownDemoSymbols: { id: number; label: string }[] = [
-  { id: 101, label: '#101 — SymbolResolver.resolve_calls (Method)' },
-  { id: 204, label: '#204 — SymbolScanner.scan (Method)' },
-  { id: 305, label: '#305 — ReferenceResolver.resolve (Function)' },
-];
-
 export default function SymbolDetail({
   symbolId,
   repoId = 1,
   repoName = 'nishtha911/RepoScope',
-  offlinePreview = false,
   apiBase,
   onSelectSymbol,
   onBackToOverview,
@@ -70,7 +55,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: !offlinePreview && validSymbolId,
+    enabled: validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -86,7 +71,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: !offlinePreview && validSymbolId,
+    enabled: validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -102,7 +87,7 @@ export default function SymbolDetail({
         signal,
         apiBase,
       }),
-    enabled: !offlinePreview && validSymbolId,
+    enabled: validSymbolId,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -113,56 +98,14 @@ export default function SymbolDetail({
   let upstreamCallers: Neighbor[] = [];
   let downstreamCallees: Neighbor[] = [];
 
-  if (offlinePreview) {
-    if (symbolId === 204) {
-      detail = {
-        id: 204,
-        file_id: 11,
-        name: 'scan',
-        qualname: 'SymbolScanner.scan',
-        kind: 'method',
-        file_path: 'backend/reposcope/ingestion/scanner.py',
-        start_line: 55,
-        end_line: 98,
-        signature: 'def scan(self, directory: Path) -> ScanResult:',
-        docstring: 'Scans a repository filesystem tree and collects source files.',
-        cyclomatic_complexity: 6,
-      };
-      upstreamCallers = [
-        {
-          symbol_id: 501,
-          name: 'main.run_scan',
-          relationship_type: 'CALLS',
-          confidence: 0.88,
-          direction: 'in',
-        },
-      ];
-      downstreamCallees = [
-        {
-          symbol_id: 101,
-          name: 'SymbolResolver.resolve_calls',
-          relationship_type: 'CALLS',
-          confidence: 1.0,
-          direction: 'out',
-        },
-      ];
-    } else {
-      detail = { ...fixtureSymbolDetail, id: symbolId };
-      upstreamCallers = fixtureUpstreamNeighbors;
-      downstreamCallees = fixtureDownstreamNeighbors;
-    }
-  } else {
-    detail = detailQuery.data;
-    upstreamCallers = upstreamQuery.data?.neighbors ?? [];
-    downstreamCallees = downstreamQuery.data?.neighbors ?? [];
-  }
+  detail = detailQuery.data;
+  upstreamCallers = upstreamQuery.data?.neighbors ?? [];
+  downstreamCallees = downstreamQuery.data?.neighbors ?? [];
 
   const isLoading =
-    !offlinePreview &&
     (detailQuery.isPending || upstreamQuery.isPending || downstreamQuery.isPending);
 
   const isError =
-    !offlinePreview &&
     (detailQuery.isError || upstreamQuery.isError || downstreamQuery.isError);
 
   const error =
@@ -246,21 +189,6 @@ export default function SymbolDetail({
         </div>
 
         <div className="symbol-detail__actions">
-          <div className="symbol-detail__quick-select">
-            <label htmlFor="symbol-switcher">Select Symbol:</label>
-            <select
-              id="symbol-switcher"
-              value={symbolId}
-              onChange={(e) => onSelectSymbol?.(Number(e.target.value))}
-            >
-              {knownDemoSymbols.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {onBackToOverview && (
             <button
               type="button"
@@ -272,10 +200,16 @@ export default function SymbolDetail({
           )}
 
           <span className="symbol-detail__badge">
-            {offlinePreview ? 'OFFLINE FIXTURE' : 'LIVE API'}
+            LIVE API
           </span>
         </div>
       </header>
+
+      {!validSymbolId && (
+        <div className="symbol-detail__loading" role="status">
+          Select a symbol from Code search or Ask RepoScope to inspect its live graph neighborhood.
+        </div>
+      )}
 
       {/* LOADING STATE */}
       {isLoading && (
@@ -514,31 +448,18 @@ export default function SymbolDetail({
             </div>
           </div>
 
-          {/* BOTTOM SECTION: SOURCE CODE VIEWER */}
-          <div className="bauhaus-border-t" style={{ padding: '32px' }}>
+          {/* BOTTOM SECTION: INDEXED SOURCE LOCATION */}
+          <div className="bauhaus-border-t symbol-detail__source-panel">
             <div className="symbol-detail__panel-header">
-              <h3>SYMBOL SOURCE CODE PREVIEW</h3>
-              <span
-                style={{
-                  fontSize: '0.8rem',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                {detail.file_path}:L{detail.start_line}–L{detail.end_line}
-              </span>
+              <h3>INDEXED SOURCE LOCATION</h3>
             </div>
-
-            <ErrorBoundary key={detail.id}>
-              <CodeViewer
-                code={codePreview.code}
-                filePath={detail.file_path}
-                language="python"
-                startLine={detail.start_line}
-                highlightStart={detail.start_line}
-                highlightEnd={detail.end_line}
-                isFixture={offlinePreview}
-              />
-            </ErrorBoundary>
+            <p className="symbol-detail__source-note">
+              This workspace exposes verified symbol metadata and graph relationships from the
+              selected snapshot. Full source retrieval is not part of the current API contract.
+            </p>
+            <code className="symbol-detail__source-location">
+              {detail.file_path}:L{detail.start_line}–L{detail.end_line}
+            </code>
           </div>
         </>
       )}

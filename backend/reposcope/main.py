@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -7,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from reposcope.staging_access import allowed_origins
 from reposcope.api import health
 from reposcope.contracts.api import ErrorDetail, ErrorResponse
 
@@ -15,13 +17,20 @@ from reposcope.contracts.api import ErrorDetail, ErrorResponse
 
 app = FastAPI(title="RepoScope API", version="1.0")
 
-# --- CORS (Vite dev server) ---
+# --- CORS ---
+# Local development often uses a different Vite port when 5173 is occupied.
+# Keep local origins flexible, while requiring explicit configuration for
+# deployed frontends.
+configured_origins = allowed_origins(
+    os.getenv("CORS_ORIGINS", os.getenv("STAGING_CORS_ORIGINS", ""))
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=configured_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Accept", "Authorization", "Content-Type"],
 )
 
 

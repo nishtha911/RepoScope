@@ -1,549 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import type {
-  RecommendationItem,
-  RecommendationsResponse,
-} from '../types/recommendations';
-import { sampleRecommendations } from '../fixtures/recommendations';
-import {
-  getCategoryMeta,
-  getImpactLevel,
-  getImpactBadgeClass,
-  formatScore,
-} from '../utils/recommendations';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Check, ChevronDown, LoaderCircle, RefreshCw, X } from 'lucide-react';
+import { getRecommendations } from '../api/recommendations';
+import { submitRecommendationFeedback } from '../api/prImpact';
+import type { RecommendationItem } from '../types/recommendations';
 import './RecommendationsBoard.css';
 
-export interface RecommendationsBoardProps {
+interface Props {
   repoId: number;
   repoName: string;
   apiBase?: string;
   offlinePreview?: boolean;
   onInspectSymbol?: (symbolId: number) => void;
-  maxItems?: number;
 }
 
-type FilterCategory =
-  | 'ALL'
-  | 'UNTESTED_HOTSPOT'
-  | 'COMPLEXITY_HOTSPOT'
-  | 'API_DOC_GAP';
+const filters = ['ALL', 'UNTESTED_HOTSPOT', 'COMPLEXITY_HOTSPOT', 'API_DOC_GAP'] as const;
+type Filter = (typeof filters)[number];
 
-export const RecommendationsBoard: React.FC<RecommendationsBoardProps> = ({
-  repoId,
-  repoName,
-  apiBase = 'http://localhost:8000/api',
-  offlinePreview = true,
-  onInspectSymbol,
-  maxItems = 10,
-}) => {
-  const [items, setItems] = useState<RecommendationItem[]>(() =>
-    offlinePreview ? sampleRecommendations.slice(0, maxItems) : [],
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(() => !offlinePreview);
-  const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterCategory>('ALL');
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const [metaInfo, setMetaInfo] = useState<{
-    snapshot_id: number | null;
-    run_id: number | null;
-    commit_sha: string | null;
-  }>(() =>
-    offlinePreview
-      ? { snapshot_id: 1, run_id: 42, commit_sha: 'a1b2c3d4e5f6' }
-      : { snapshot_id: null, run_id: null, commit_sha: null },
-  );
-
-  useEffect(() => {
-    if (offlinePreview) {
-      return;
-    }
-
-    let ignore = false;
-    async function fetchLive() {
-      try {
-        const response = await fetch(
-          `${apiBase}/repos/${repoId}/recommendations?k=${maxItems}`,
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Recommendations API returned HTTP ${response.status}: ${response.statusText}`,
-          );
-        }
-
-        const data = (await response.json()) as RecommendationsResponse;
-        if (!ignore) {
-          setItems(data.recommendations || []);
-          setMetaInfo({
-            snapshot_id: data.snapshot_id,
-            run_id: data.run_id,
-            commit_sha: data.commit_sha,
-          });
-          setError(null);
-          setIsLoading(false);
-        }
-      } catch (err: unknown) {
-        if (!ignore) {
-          const message =
-            err instanceof Error ? err.message : 'Failed to fetch recommendations';
-          setError(message);
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchLive();
-    return () => {
-      ignore = true;
-    };
-  }, [apiBase, repoId, maxItems, offlinePreview]);
-
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    if (offlinePreview) {
-      setTimeout(() => {
-        setItems(sampleRecommendations.slice(0, maxItems));
-        setIsLoading(false);
-      }, 150);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${apiBase}/repos/${repoId}/recommendations?k=${maxItems}`,
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Recommendations API returned HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      const data = (await response.json()) as RecommendationsResponse;
-      setItems(data.recommendations || []);
-      setMetaInfo({
-        snapshot_id: data.snapshot_id,
-        run_id: data.run_id,
-        commit_sha: data.commit_sha,
-      });
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to fetch recommendations';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleRationale = (id: number) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const toggleAllRationales = () => {
-    if (expandedIds.size === filteredItems.length) {
-      setExpandedIds(new Set());
-    } else {
-      setExpandedIds(new Set(filteredItems.map((item) => item.id)));
-    }
-  };
-
-  // Filter items
-  const filteredItems = items.filter((item) => {
-    if (activeFilter === 'ALL') return true;
-    const norm = (item.category || '').toUpperCase();
-    if (activeFilter === 'UNTESTED_HOTSPOT') return norm.includes('UNTESTED');
-    if (activeFilter === 'COMPLEXITY_HOTSPOT') return norm.includes('COMPLEXITY');
-    if (activeFilter === 'API_DOC_GAP') return norm.includes('DOC') || norm.includes('API');
-    return true;
+export default function RecommendationsBoard({ repoId, repoName, onInspectSymbol }: Props) {
+  const [filter, setFilter] = useState<Filter>('ALL');
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [feedback, setFeedback] = useState<Record<number, string>>({});
+  const query = useQuery({
+    queryKey: ['recommendations', repoId],
+    queryFn: ({ signal }) => getRecommendations(repoId, 10, signal),
+    retry: false,
   });
+  const items = query.data?.recommendations ?? [];
+  const visible = items.filter((item) => filter === 'ALL' || item.category.toUpperCase() === filter);
 
-  // Category counts
-  const countUntested = items.filter((item) =>
-    (item.category || '').toUpperCase().includes('UNTESTED'),
-  ).length;
-  const countComplexity = items.filter((item) =>
-    (item.category || '').toUpperCase().includes('COMPLEXITY'),
-  ).length;
-  const countDocGaps = items.filter((item) => {
-    const c = (item.category || '').toUpperCase();
-    return c.includes('DOC') || c.includes('API');
-  }).length;
+  async function sendFeedback(item: RecommendationItem, action: 'accepted' | 'dismissed') {
+    try {
+      await submitRecommendationFeedback(item.id, action);
+      setFeedback((previous) => ({ ...previous, [item.id]: action }));
+    } catch {
+      setFeedback((previous) => ({ ...previous, [item.id]: 'failed' }));
+    }
+  }
 
   return (
-    <div
-      className="rec-board"
-      role="region"
-      aria-label="What to Work on Next Recommendations Board"
-    >
-      {/* HEADER SECTION */}
-      <header className="rec-board__header bauhaus-border-b">
+    <section className="rec-board" aria-labelledby="recommendations-title">
+      <header className="rec-board__header">
         <div className="rec-board__title-wrap">
-          <span className="rec-board__kicker">
-            ACTION RECOMMENDER // HEURISTIC PRIORITIZATION ENGINE
-          </span>
-          <h2 className="rec-board__title">WHAT TO WORK ON NEXT</h2>
+          <span className="rec-board__kicker">LIVE RECOMMENDER // PUBLISHED SNAPSHOT</span>
+          <h1 id="recommendations-title" className="rec-board__title">What to work on next</h1>
           <p className="rec-board__desc">
-            Top ranked findings prioritized by impact, likelihood, effort, and confidence.
-            Each finding includes detailed feature citations and rationale explanations.
+            Findings returned by the repository recommendation API, ranked by deterministic impact,
+            likelihood, effort, and confidence.
           </p>
         </div>
-
         <div className="rec-board__meta-box">
-          <span
-            className={`rec-board__mode-badge ${
-              offlinePreview ? 'rec-board__mode-badge--offline' : ''
-            }`}
-          >
-            {offlinePreview
-              ? 'OFFLINE FIXTURE MODE'
-              : `LIVE API: GET /api/repos/${repoId}/recommendations`}
-          </span>
-
-          <span className="rec-board__repo-info">
-            REPO: <strong>{repoName}</strong> (#{repoId})
-            {metaInfo.run_id && ` // RUN #${metaInfo.run_id}`}
-          </span>
+          <span className="rec-board__mode-badge">LIVE API</span>
+          <span className="rec-board__repo-info">{repoName} · {query.data?.commit_sha?.slice(0, 7) ?? 'current snapshot'}</span>
         </div>
       </header>
 
-      {/* FILTER AND ACTION BAR */}
-      <section
-        className="rec-board__filter-bar bauhaus-border-b"
-        aria-label="Category filters and actions"
-      >
+      <div className="rec-board__filter-bar">
         <div className="rec-board__filter-chips" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeFilter === 'ALL'}
-            className={`rec-board__filter-chip ${
-              activeFilter === 'ALL' ? 'rec-board__filter-chip--active' : ''
-            }`}
-            onClick={() => setActiveFilter('ALL')}
-          >
-            ALL FINDINGS ({items.length})
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeFilter === 'UNTESTED_HOTSPOT'}
-            className={`rec-board__filter-chip ${
-              activeFilter === 'UNTESTED_HOTSPOT'
-                ? 'rec-board__filter-chip--active'
-                : ''
-            }`}
-            onClick={() => setActiveFilter('UNTESTED_HOTSPOT')}
-          >
-            🧪 UNTESTED HOTSPOTS ({countUntested})
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeFilter === 'COMPLEXITY_HOTSPOT'}
-            className={`rec-board__filter-chip ${
-              activeFilter === 'COMPLEXITY_HOTSPOT'
-                ? 'rec-board__filter-chip--active'
-                : ''
-            }`}
-            onClick={() => setActiveFilter('COMPLEXITY_HOTSPOT')}
-          >
-            ⚡ COMPLEXITY HOTSPOTS ({countComplexity})
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeFilter === 'API_DOC_GAP'}
-            className={`rec-board__filter-chip ${
-              activeFilter === 'API_DOC_GAP'
-                ? 'rec-board__filter-chip--active'
-                : ''
-            }`}
-            onClick={() => setActiveFilter('API_DOC_GAP')}
-          >
-            📄 API DOC GAPS ({countDocGaps})
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            className="bauhaus-btn"
-            style={{ padding: '6px 12px', fontSize: '0.72rem' }}
-            onClick={toggleAllRationales}
-            disabled={filteredItems.length === 0}
-            aria-label="Toggle all rationale dropdowns"
-          >
-            {expandedIds.size === filteredItems.length && filteredItems.length > 0
-              ? 'COLLAPSE ALL RATIONALES'
-              : 'EXPAND ALL RATIONALES'}
-          </button>
-
-          <button
-            type="button"
-            className="bauhaus-btn-invert"
-            style={{ padding: '6px 12px', fontSize: '0.72rem' }}
-            onClick={handleRefresh}
-            disabled={isLoading}
-            aria-label="Refresh recommendations"
-          >
-            {isLoading ? 'REFRESHING…' : '↻ REFRESH'}
-          </button>
-        </div>
-      </section>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="rec-board__content">
-        {/* Loading state */}
-        {isLoading && (
-          <div className="rec-board__state-box" role="status" aria-label="Loading">
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-              CALCULATING TOP CODEBASE RECOMMENDATIONS…
-            </span>
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && !isLoading && (
-          <div className="rec-board__error-box" role="alert">
-            <div style={{ fontWeight: 800, marginBottom: '6px' }}>
-              ⚠️ FAILED TO LOAD RECOMMENDATIONS
-            </div>
-            <div>{error}</div>
+          {filters.map((option) => (
             <button
+              key={option}
               type="button"
-              className="bauhaus-btn"
-              style={{ marginTop: '12px', padding: '6px 14px' }}
-              onClick={handleRefresh}
+              role="tab"
+              aria-selected={filter === option}
+              className={`rec-board__filter-chip ${filter === option ? 'rec-board__filter-chip--active' : ''}`}
+              onClick={() => setFilter(option)}
             >
-              RETRY FETCH
+              {option.replaceAll('_', ' ')} ({option === 'ALL' ? items.length : items.filter((item) => item.category.toUpperCase() === option).length})
             </button>
-          </div>
-        )}
+          ))}
+        </div>
+        <button type="button" className="bauhaus-btn-invert" onClick={() => void query.refetch()} disabled={query.isFetching}>
+          <RefreshCw size={14} className={query.isFetching ? 'reposcope-spin' : ''} /> REFRESH
+        </button>
+      </div>
 
-        {/* Empty state */}
-        {!isLoading && !error && filteredItems.length === 0 && (
-          <div className="rec-board__state-box">
-            <h3 style={{ margin: 0 }}>NO FINDINGS MATCH THIS FILTER</h3>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
-              Select a different category tab or clear active filters.
-            </p>
-          </div>
-        )}
-
-        {/* Top 10 Ranked Findings List */}
-        {!isLoading && !error && filteredItems.length > 0 && (
-          <div
-            className="rec-board__list"
-            aria-label="Ranked recommendation findings"
-          >
-            {filteredItems.map((item, index) => {
-              const rank = index + 1;
-              const rankFormatted = rank < 10 ? `#0${rank}` : `#${rank}`;
-              const catMeta = getCategoryMeta(item.category);
-              const impactLevel = getImpactLevel(
-                item.computed_features?.impact,
-                item.score,
-              );
-              const impactBadgeClass = getImpactBadgeClass(impactLevel);
-              const isExpanded = expandedIds.has(item.id);
-              const panelId = `rationale-panel-${item.id}`;
-
-              return (
-                <article
-                  key={item.id}
-                  className="rec-card"
-                  data-testid="recommendation-card"
-                  aria-label={`Recommendation ${rankFormatted}: ${item.title}`}
-                >
-                  {/* CARD HEADER */}
-                  <header className="rec-card__header">
-                    <div className="rec-card__header-left">
-                      {/* Rank Badge */}
-                      <span
-                        className="rec-card__rank-badge"
-                        data-testid="rank-badge"
-                      >
-                        {rankFormatted}
-                      </span>
-
-                      {/* Category Tag */}
-                      <span
-                        className={`rec-cat-tag ${catMeta.className}`}
-                        data-testid="category-tag"
-                      >
-                        <span>{catMeta.icon}</span>
-                        <span>{catMeta.label}</span>
-                      </span>
-
-                      {/* Impact Badge */}
-                      <span
-                        className={`rec-impact-badge ${impactBadgeClass}`}
-                        data-testid="impact-badge"
-                      >
-                        {impactLevel} IMPACT
-                      </span>
-                    </div>
-
-                    {/* Priority Score */}
-                    <div className="rec-card__header-right">
-                      <div className="rec-card__score-wrap">
-                        <span className="rec-card__score-label">PRIORITY SCORE</span>
-                        <span
-                          className="rec-card__score-val"
-                          data-testid="priority-score"
-                        >
-                          {formatScore(item.score)}
-                        </span>
-                      </div>
-                    </div>
-                  </header>
-
-                  {/* CARD BODY */}
-                  <div className="rec-card__body">
-                    <h3 className="rec-card__title">{item.title}</h3>
-                    <p className="rec-card__desc">{item.description}</p>
-
-                    {/* Location Badge (file & line / symbol qualname) */}
-                    {(item.file_path || item.qualname) && (
-                      <div className="rec-card__location" data-testid="location-badge">
-                        <span>📍</span>
-                        <span>
-                          {item.file_path || 'Symbol'}:
-                          {item.start_line ? `${item.start_line}` : ''}{' '}
-                          {item.qualname && <code>({item.qualname})</code>}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Feature Metrics Strip */}
-                    <div className="rec-card__metrics-bar">
-                      <div className="rec-card__metric-token">
-                        <span className="rec-card__metric-name">IMPACT:</span>
-                        <span className="rec-card__metric-val">
-                          {formatScore(item.computed_features?.impact)}
-                        </span>
-                      </div>
-                      <div className="rec-card__metric-token">
-                        <span className="rec-card__metric-name">LIKELIHOOD:</span>
-                        <span className="rec-card__metric-val">
-                          {formatScore(item.computed_features?.likelihood)}
-                        </span>
-                      </div>
-                      <div className="rec-card__metric-token">
-                        <span className="rec-card__metric-name">EFFORT:</span>
-                        <span className="rec-card__metric-val">
-                          {formatScore(item.computed_features?.effort)}
-                        </span>
-                      </div>
-                      <div className="rec-card__metric-token">
-                        <span className="rec-card__metric-name">CONFIDENCE:</span>
-                        <span className="rec-card__metric-val">
-                          {formatScore(item.computed_features?.confidence)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* RATIONALE DROPDOWN / ACCORDION */}
-                  <div className="rec-card__rationale-wrap">
-                    <button
-                      type="button"
-                      className="rec-card__dropdown-toggle"
-                      onClick={() => toggleRationale(item.id)}
-                      aria-expanded={isExpanded}
-                      aria-controls={panelId}
-                      data-testid={`rationale-toggle-${item.id}`}
-                    >
-                      <span>
-                        {isExpanded ? '▴ HIDE RATIONALE' : '▾ WHY THIS MATTERS (RATIONALE)'}
-                      </span>
-                      <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                        {item.rationale_source === 'llm_constrained'
-                          ? 'LLM-CONSTRAINED'
-                          : 'DETERMINISTIC'}
-                      </span>
+      {query.isPending && <div className="rec-board__state-box"><LoaderCircle className="reposcope-spin" /> Loading recommendations…</div>}
+      {query.isError && <div className="rec-board__error-box" role="alert">Recommendations are unavailable until the repository index is ready.</div>}
+      {!query.isPending && !query.isError && visible.length === 0 && (
+        <div className="rec-board__state-box">No findings match this filter.</div>
+      )}
+      <div className="rec-board__list">
+        {visible.map((item, index) => {
+          const isExpanded = expanded.has(item.id);
+          const action = feedback[item.id];
+          return (
+            <article key={item.id} className="rec-board__item">
+              <div className="rec-board__item-rank">#{String(index + 1).padStart(2, '0')}</div>
+              <div className="rec-board__item-main">
+                <div className="rec-board__item-heading">
+                  <span className="rec-board__item-category">{item.category}</span>
+                  <span className="rec-board__item-score">{item.score === null ? '—' : item.score.toFixed(3)}</span>
+                </div>
+                <h2>{item.title}</h2>
+                <p>{item.description}</p>
+                <div className="rec-board__item-actions">
+                  <button type="button" className="bauhaus-btn" onClick={() => setExpanded((previous) => {
+                    const next = new Set(previous);
+                    if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                    return next;
+                  })}>
+                    <ChevronDown size={14} /> {isExpanded ? 'HIDE RATIONALE' : 'SHOW RATIONALE'}
+                  </button>
+                  {item.symbol_id && onInspectSymbol && (
+                    <button type="button" className="bauhaus-btn" onClick={() => onInspectSymbol(item.symbol_id!)}>
+                      INSPECT SYMBOL
                     </button>
-
-                    {isExpanded && (
-                      <div
-                        id={panelId}
-                        className="rec-card__dropdown-panel"
-                        data-testid={`rationale-panel-${item.id}`}
-                      >
-                        <div className="rec-card__rationale-header">
-                          <strong style={{ fontSize: '0.72rem', letterSpacing: '0.05em' }}>
-                            PRIORITIZATION RATIONALE:
-                          </strong>
-
-                          <span
-                            className={`rec-card__rationale-source ${
-                              item.rationale_source === 'llm_constrained'
-                                ? 'rec-card__rationale-source--llm'
-                                : 'rec-card__rationale-source--deterministic'
-                            }`}
-                          >
-                            {item.rationale_source === 'llm_constrained'
-                              ? '✓ LLM-CONSTRAINED RATIONALE'
-                              : '⚡ DETERMINISTIC RATIONALE'}
-                          </span>
-                        </div>
-
-                        {/* Rationale text */}
-                        <p className="rec-card__rationale-text">
-                          {item.rationale || 'No detailed rationale generated for this finding.'}
-                        </p>
-
-                        {/* Feature Citations */}
-                        {item.feature_citations && item.feature_citations.length > 0 && (
-                          <div className="rec-card__citations-strip">
-                            <span className="rec-card__citations-label">CITATIONS:</span>
-                            {item.feature_citations.map((c, i) => (
-                              <span
-                                key={i}
-                                className="rec-card__citation-pill"
-                                data-testid="citation-pill"
-                              >
-                                {c.feature}: <strong>{c.value}</strong>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Actions in panel */}
-                        <div className="rec-card__panel-actions">
-                          {item.symbol_id && onInspectSymbol && (
-                            <button
-                              type="button"
-                              className="bauhaus-btn-invert rec-card__inspect-btn"
-                              onClick={() => onInspectSymbol(item.symbol_id!)}
-                            >
-                              INSPECT SYMBOL IN GRAPH →
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                  )}
+                  <button type="button" className="bauhaus-btn" onClick={() => void sendFeedback(item, 'accepted')} disabled={Boolean(action)}>
+                    <Check size={14} /> {action === 'accepted' ? 'ACCEPTED' : 'ACCEPT'}
+                  </button>
+                  <button type="button" className="bauhaus-btn" onClick={() => void sendFeedback(item, 'dismissed')} disabled={Boolean(action)}>
+                    <X size={14} /> {action === 'dismissed' ? 'DISMISSED' : 'DISMISS'}
+                  </button>
+                </div>
+                {isExpanded && (
+                  <div className="rec-board__rationale">
+                    <strong>{item.rationale_source ?? 'deterministic'}</strong>
+                    <p>{item.rationale ?? 'No rationale was returned for this finding.'}</p>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </main>
-    </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
-};
-
-export default RecommendationsBoard;
+}

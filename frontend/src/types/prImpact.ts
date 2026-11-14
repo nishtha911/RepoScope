@@ -18,6 +18,7 @@ export interface PRImpactReport {
   affected_endpoints_count: number;
   impacted_tests_count: number;
   summary: string;
+  feedback?: PRFeedbackStatus;
   impacted_endpoints?: AffectedEndpointItem[];
   impacted_tests?: ImpactedTestItem[];
   missing_tests?: MissingTestItem[];
@@ -43,6 +44,7 @@ export interface ImpactedTestItem {
 }
 
 export interface MissingTestItem {
+  symbol_id?: number;
   symbol_name: string;
   file_path: string;
   reason: string; // e.g. "No direct static test association found"

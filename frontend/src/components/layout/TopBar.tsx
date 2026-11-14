@@ -4,6 +4,7 @@ import type { NavTab } from './Sidebar';
 
 interface TopBarProps {
   activeTab: NavTab;
+  repositoryName: string;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchSubmit: () => void;
@@ -12,6 +13,7 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({
   activeTab,
+  repositoryName,
   searchQuery,
   onSearchChange,
   onSearchSubmit,
@@ -34,7 +36,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <nav aria-label="Breadcrumbs" className="reposcope-topbar__breadcrumbs">
         <span className="reposcope-topbar__crumb">Workspace</span>
         <span className="reposcope-topbar__separator">/</span>
-        <span className="reposcope-topbar__crumb">platform</span>
+        <span className="reposcope-topbar__crumb">{repositoryName}</span>
         <span className="reposcope-topbar__separator">/</span>
         <span className="reposcope-topbar__crumb reposcope-topbar__crumb--active">
           {currentTitle}
@@ -70,7 +72,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Documentation Link */}
         <a
-          href="https://github.com/nishtha911/RepoScope"
+          href="https://github.com/nishtha911/RepoScope/tree/main/docs"
           target="_blank"
           rel="noopener noreferrer"
           className="reposcope-topbar__docs-link"
@@ -80,9 +82,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </a>
 
         {/* Organization Badge */}
-        <div className="reposcope-topbar__org-badge">
-          ACME
-        </div>
+        <span className="reposcope-topbar__org-badge">LIVE</span>
       </div>
     </header>
   );

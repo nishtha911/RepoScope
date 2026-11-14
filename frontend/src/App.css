@@ -1580,4 +1580,172 @@
   .reposcope-content {
     padding: 20px 16px;
   }
+
+  .reposcope-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    overflow-x: auto;
+  }
+
+  .reposcope-sidebar__top,
+  .reposcope-sidebar__bottom {
+    width: 100%;
+  }
+
+  .reposcope-sidebar__brand {
+    padding: 14px 16px 10px;
+  }
+
+  .reposcope-sidebar__repo-box {
+    width: calc(100% - 32px);
+    margin-bottom: 12px;
+  }
+
+  .reposcope-sidebar__nav-heading,
+  .reposcope-sidebar__index-card,
+  .reposcope-sidebar__org-label {
+    display: none;
+  }
+
+  .reposcope-sidebar__nav-list {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0 8px 10px;
+  }
+
+  .reposcope-sidebar__nav-item {
+    flex: 0 0 auto;
+    min-height: 42px;
+    margin: 0;
+    padding: 9px 12px;
+  }
+
+  .reposcope-topbar {
+    height: auto;
+    min-height: 0;
+    padding: 12px 16px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .reposcope-topbar__actions {
+    gap: 8px;
+  }
+
+  .reposcope-topbar__search-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .reposcope-topbar__docs-link,
+  .reposcope-topbar__org-badge {
+    display: none;
+  }
+
+  .reposcope-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .reposcope-page-actions,
+  .reposcope-page-actions > button {
+    width: 100%;
+  }
+
+  .reposcope-page-actions > button {
+    min-height: 42px;
+  }
+
+  .reposcope-telemetry-card {
+    min-width: 0;
+  }
+
+  .reposcope-pr-submit,
+  .reposcope-pr-report__header {
+    padding: 16px;
+  }
+
+  .reposcope-pr-submit__footer > button {
+    width: 100%;
+  }
+
+  .reposcope-mobile-repo-button {
+    display: none;
+  }
+}
+
+.reposcope-setup {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+
+.reposcope-setup__card {
+  width: min(100%, 620px);
+  padding: clamp(24px, 5vw, 48px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.reposcope-setup__card--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.reposcope-setup__form {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.reposcope-setup__form label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.reposcope-setup__form button,
+.reposcope-setup__actions button {
+  min-height: 42px;
+  margin-top: 8px;
+}
+
+.reposcope-setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.reposcope-form-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  color: #9e3f36;
+  background: var(--pastel-pink);
+  border: 1px solid #d6a39b;
+  font-size: 12px;
+}
+
+.reposcope-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+
+.reposcope-mobile-repo-button {
+  display: none;
 }

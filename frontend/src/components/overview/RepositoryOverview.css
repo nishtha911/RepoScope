@@ -1,0 +1,25 @@
+.reposcope-live-panel {
+  min-height: 260px;
+  padding: 24px;
+}
+
+.reposcope-live-panel__empty {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-direction: column;
+  text-align: center;
+  color: var(--muted);
+}
+
+.reposcope-live-panel__empty p {
+  margin: 0;
+}
+
+.reposcope-overview-screen .reposcope-page-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

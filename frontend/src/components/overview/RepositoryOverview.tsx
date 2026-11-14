@@ -1,198 +1,163 @@
-import React from 'react';
-import { Plus, ExternalLink } from 'lucide-react';
-import ArchitectureMap from './ArchitectureMap';
-import ArchitectureAssistant from './ArchitectureAssistant';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowUpRight, GitBranch, Search, Sparkles } from 'lucide-react';
+import type { Repository } from '../../api/repositories';
+import { getRecommendations } from '../../api/recommendations';
+import './RepositoryOverview.css';
 
-interface RepositoryOverviewProps {
+interface Props {
+  repository: Repository;
   onAnalyzePR: () => void;
-  onOpenGraph: () => void;
+  onOpenGraph: (symbolId?: number) => void;
   onOpenRecommendations: () => void;
+  onOpenSearch: () => void;
 }
 
-export const RepositoryOverview: React.FC<RepositoryOverviewProps> = ({
+function formatNumber(value: number | null) {
+  return value === null ? '—' : new Intl.NumberFormat().format(value);
+}
+
+export default function RepositoryOverview({
+  repository,
   onAnalyzePR,
   onOpenGraph,
   onOpenRecommendations,
-}) => {
-  const recommendations = [
-    {
-      num: '01',
-      numColor: 'var(--beige)',
-      tag: 'HIGH CENTRALITY',
-      title: 'Protect the billing core',
-      desc: '128 symbols depend on BillingService. Add contract tests before the next refactor.',
-      action: 'Inspect symbol',
-      onClick: onOpenGraph,
-    },
-    {
-      num: '02',
-      numColor: 'var(--pastel-blue)',
-      tag: 'COUPLING HOTSPOT',
-      title: 'Untangle the auth boundary',
-      desc: '7 circular dependencies connect auth and users. Introduce a shared interface.',
-      action: 'Explore dependency chain',
-      onClick: onOpenGraph,
-    },
-    {
-      num: '03',
-      numColor: 'var(--pastel-pink)',
-      tag: 'TEST COVERAGE GAP',
-      title: 'Cover the refund path',
-      desc: '3 impacted routes have no integration tests. Start with POST /api/refunds.',
-      action: 'Review missing tests',
-      onClick: onAnalyzePR,
-    },
-  ];
+  onOpenSearch,
+}: Props) {
+  const recommendationsQuery = useQuery({
+    queryKey: ['recommendations', repository.id, 'overview'],
+    queryFn: ({ signal }) => getRecommendations(repository.id, 3, signal),
+    enabled: repository.status === 'ready',
+    retry: false,
+  });
+  const recommendations = recommendationsQuery.data?.recommendations ?? [];
 
   return (
     <div className="reposcope-overview-screen">
-      {/* Page Title & Primary Action */}
-      <div className="reposcope-page-header">
+      <header className="reposcope-page-header">
         <div>
-          <h1 className="reposcope-page-title">Your codebase, in focus.</h1>
+          <span className="reposcope-eyebrow">REPOSITORY OVERVIEW</span>
+          <h1 className="reposcope-page-title">{repository.name}</h1>
           <p className="reposcope-page-subtitle">
-            A living map of your architecture. A clearer path to your next change.
+            Live architecture intelligence for the indexed {repository.default_branch} branch.
           </p>
         </div>
-        <button
-          type="button"
-          className="reposcope-primary-action-btn"
-          onClick={onAnalyzePR}
-        >
-          <Plus size={16} strokeWidth={2.2} />
-          <span>Analyze pull request</span>
-        </button>
-      </div>
+        <div className="reposcope-page-actions">
+          <button type="button" className="bauhaus-btn" onClick={onOpenSearch}>
+            <Search size={15} /> SEARCH CODE
+          </button>
+          <button type="button" className="bauhaus-btn-invert" onClick={onAnalyzePR}>
+            ANALYZE PATCH <ArrowUpRight size={15} />
+          </button>
+        </div>
+      </header>
 
-      {/* Telemetry Section */}
-      <section className="reposcope-telemetry-section" aria-labelledby="telemetry-heading">
+      <section className="reposcope-telemetry-section" aria-labelledby="repo-telemetry">
         <div className="reposcope-telemetry-header">
-          <span id="telemetry-heading" className="reposcope-telemetry-title">
-            REPOSITORY TELEMETRY
-          </span>
+          <span id="repo-telemetry" className="reposcope-telemetry-title">LIVE REPOSITORY TELEMETRY</span>
           <span className="reposcope-telemetry-meta">
-            main ↓ · TypeScript 78% / Python 22%
+            {repository.status.toUpperCase()} · {repository.head_sha?.slice(0, 7) ?? 'awaiting index'}
           </span>
         </div>
-
         <div className="reposcope-telemetry-grid">
-          {/* Card 1: Beige */}
           <div className="reposcope-telemetry-card reposcope-telemetry-card--beige">
-            <div className="reposcope-telemetry-card__header">
-              <span className="reposcope-telemetry-card__label">Indexed symbols</span>
-              <span className="reposcope-telemetry-card__idx">01</span>
-            </div>
-            <div className="reposcope-telemetry-card__value">24,891</div>
-            <div className="reposcope-telemetry-card__sub">Across 1,204 source files</div>
+            <span className="reposcope-telemetry-card__label">Indexed symbols</span>
+            <strong className="reposcope-telemetry-card__value">{formatNumber(repository.symbol_count)}</strong>
+            <span className="reposcope-telemetry-card__sub">From the current snapshot</span>
           </div>
-
-          {/* Card 2: Pastel Blue */}
           <div className="reposcope-telemetry-card reposcope-telemetry-card--blue">
-            <div className="reposcope-telemetry-card__header">
-              <span className="reposcope-telemetry-card__label">AST call edges</span>
-              <span className="reposcope-telemetry-card__idx">02</span>
-            </div>
-            <div className="reposcope-telemetry-card__value">86,402</div>
-            <div className="reposcope-telemetry-card__sub">3.5 dependencies per symbol</div>
+            <span className="reposcope-telemetry-card__label">Source files</span>
+            <strong className="reposcope-telemetry-card__value">{formatNumber(repository.file_count)}</strong>
+            <span className="reposcope-telemetry-card__sub">Indexed repository files</span>
           </div>
-
-          {/* Card 3: Pastel Pink */}
           <div className="reposcope-telemetry-card reposcope-telemetry-card--pink">
-            <div className="reposcope-telemetry-card__header">
-              <span className="reposcope-telemetry-card__label">PR blast radius</span>
-              <span className="reposcope-telemetry-card__idx">03</span>
-            </div>
-            <div className="reposcope-telemetry-card__value">12.8%</div>
-            <div className="reposcope-telemetry-card__sub">Median · last 30 pull requests</div>
+            <span className="reposcope-telemetry-card__label">Snapshot</span>
+            <strong className="reposcope-telemetry-card__value">{repository.snapshot_id ?? '—'}</strong>
+            <span className="reposcope-telemetry-card__sub">Published graph snapshot</span>
           </div>
-
-          {/* Card 4: Pastel Green */}
           <div className="reposcope-telemetry-card reposcope-telemetry-card--green">
-            <div className="reposcope-telemetry-card__header">
-              <span className="reposcope-telemetry-card__label">Pipeline health</span>
-              <span className="reposcope-telemetry-card__idx">04</span>
-            </div>
-            <div className="reposcope-telemetry-card__value reposcope-telemetry-card__value--text">
-              All systems go
-            </div>
-            <div className="reposcope-telemetry-card__sub">4 / 4 ingestion stages complete</div>
+            <span className="reposcope-telemetry-card__label">Pipeline health</span>
+            <strong className="reposcope-telemetry-card__value reposcope-telemetry-card__value--text">
+              {repository.status === 'ready' ? 'Ready' : repository.status}
+            </strong>
+            <span className="reposcope-telemetry-card__sub">API and worker status</span>
           </div>
         </div>
       </section>
 
-      {/* Middle Row: Architecture Map & Assistant */}
-      <div className="reposcope-overview-middle-row">
-        <ArchitectureMap
-          onOpenFullGraph={onOpenGraph}
-          onSelectModule={(mod) => {
-            console.log('Selected architecture module:', mod);
-          }}
-        />
-        <ArchitectureAssistant
-          onCitationClick={() => {
-            onOpenGraph();
-          }}
-        />
-      </div>
-
-      {/* Bottom Row: Recommended Next Moves */}
-      <section className="reposcope-recommendations-section" aria-labelledby="recommendations-heading">
-        <div className="reposcope-section-header">
-          <div>
-            <h2 id="recommendations-heading" className="reposcope-section-title">
-              Recommended next moves
-            </h2>
-            <p className="reposcope-section-subtitle">
-              Prioritized by graph centrality and test coverage.
-            </p>
+      <section className="reposcope-overview-middle-row" aria-label="Live repository tools">
+        <div className="reposcope-arch-card reposcope-live-panel">
+          <div className="reposcope-arch-card__header">
+            <div>
+              <span className="reposcope-eyebrow">GRAPH WORKSPACE</span>
+              <h2 className="reposcope-arch-card__title">Explore the dependency graph</h2>
+              <p className="reposcope-arch-card__subtitle">
+                Search a symbol to inspect its real upstream and downstream relationships.
+              </p>
+            </div>
+            <GitBranch size={20} />
           </div>
-          <button
-            type="button"
-            className="reposcope-inline-link-btn"
-            onClick={onOpenRecommendations}
-          >
-            <span>View all recommendations</span>
-            <ExternalLink size={13} strokeWidth={1.75} />
+          <div className="reposcope-live-panel__empty">
+            <p>Graph navigation starts from a live symbol result.</p>
+            <button type="button" className="bauhaus-btn-invert" onClick={onOpenSearch}>
+              FIND A SYMBOL <ArrowUpRight size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="reposcope-assistant-panel reposcope-live-panel">
+          <span className="reposcope-eyebrow">ASK REPOSCOPE</span>
+          <h2 className="reposcope-assistant-panel__title">Ask grounded questions.</h2>
+          <p className="reposcope-assistant-panel__answer">
+            The Q&A workflow uses the indexed snapshot and returns evidence-backed answers.
+          </p>
+          <button type="button" className="bauhaus-btn-invert" onClick={() => onOpenGraph()}>
+            OPEN GRAPH <ArrowUpRight size={14} />
           </button>
         </div>
+      </section>
 
+      <section className="reposcope-recommendations-section" aria-labelledby="overview-recommendations">
+        <div className="reposcope-section-header">
+          <div>
+            <span className="reposcope-eyebrow">HEURISTIC FINDINGS</span>
+            <h2 id="overview-recommendations" className="reposcope-section-title">Recommended next moves</h2>
+            <p className="reposcope-section-subtitle">Generated from the current published snapshot.</p>
+          </div>
+          <button type="button" className="reposcope-inline-link-btn" onClick={onOpenRecommendations}>
+            VIEW ALL <ArrowUpRight size={13} />
+          </button>
+        </div>
+        {recommendationsQuery.isPending && <div className="reposcope-live-panel__empty">Loading live recommendations…</div>}
+        {recommendationsQuery.isError && (
+          <div className="reposcope-form-error" role="alert">
+            Recommendations are unavailable until the repository index is ready.
+          </div>
+        )}
+        {!recommendationsQuery.isPending && !recommendationsQuery.isError && recommendations.length === 0 && (
+          <div className="reposcope-live-panel__empty">
+            <Sparkles size={18} />
+            <p>No recommendations were published for this snapshot.</p>
+          </div>
+        )}
         <div className="reposcope-recommendations-grid">
-          {recommendations.map((rec) => (
-            <div key={rec.num} className="reposcope-recommendation-card">
+          {recommendations.map((item, index) => (
+            <article key={item.id} className="reposcope-recommendation-card">
               <div>
                 <div className="reposcope-recommendation-card__top">
-                  <span
-                    className="reposcope-recommendation-card__num"
-                    style={{ backgroundColor: rec.numColor }}
-                  >
-                    {rec.num}
-                  </span>
-                  <span className="reposcope-recommendation-card__tag">
-                    {rec.tag}
-                  </span>
+                  <span className="reposcope-recommendation-card__num">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="reposcope-recommendation-card__tag">{item.category}</span>
                 </div>
-                <h3 className="reposcope-recommendation-card__title">
-                  {rec.title}
-                </h3>
-                <p className="reposcope-recommendation-card__desc">
-                  {rec.desc}
-                </p>
+                <h3 className="reposcope-recommendation-card__title">{item.title}</h3>
+                <p className="reposcope-recommendation-card__desc">{item.description}</p>
               </div>
-
-              <button
-                type="button"
-                className="reposcope-recommendation-card__action"
-                onClick={rec.onClick}
-              >
-                <span>{rec.action}</span>
-                <ExternalLink size={13} strokeWidth={1.75} />
-              </button>
-            </div>
+              {item.symbol_id && (
+                <button type="button" className="reposcope-recommendation-card__action" onClick={() => onOpenGraph(item.symbol_id!)}>
+                  INSPECT SYMBOL <ArrowUpRight size={13} />
+                </button>
+              )}
+            </article>
           ))}
         </div>
       </section>
     </div>
   );
-};
-export default RepositoryOverview;
-
+}

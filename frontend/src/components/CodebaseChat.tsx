@@ -1,10 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { ChatMessage, CitationEvidence, AskTimings } from '../types/chat';
-import {
-  initialChatMessages,
-  sampleStarterPrompts,
-  fixturePromptResponses,
-} from '../fixtures/chat';
 import MarkdownRenderer from './MarkdownRenderer';
 import './CodebaseChat.css';
 
@@ -16,34 +11,18 @@ interface Props {
   onSelectSymbol?: (symbolId: number) => void;
 }
 
-function pickFixtureResponse(query: string) {
-  const q = query.toLowerCase();
-  if (q.includes('resolver') || q.includes('ast') || q.includes('pass')) {
-    return fixturePromptResponses.resolver;
-  }
-  if (q.includes('rrf') || q.includes('search') || q.includes('fusion') || q.includes('hybrid')) {
-    return fixturePromptResponses.search;
-  }
-  if (q.includes('evidence') || q.includes('gap') || q.includes('pack') || q.includes('citation')) {
-    return fixturePromptResponses.evidence;
-  }
-  return fixturePromptResponses.default;
-}
-
 export const CodebaseChat: React.FC<Props> = ({
   repoId,
   repoName,
-  apiBase = 'http://localhost:8000/api',
-  offlinePreview = true,
+  apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   onSelectSymbol,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedDrawers, setExpandedDrawers] = useState<Record<string, boolean>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const streamIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Auto-scroll to bottom of messages container
@@ -58,9 +37,6 @@ export const CodebaseChat: React.FC<Props> = ({
   // Clean up streaming on unmount
   useEffect(() => {
     return () => {
-      if (streamIntervalRef.current) {
-        clearInterval(streamIntervalRef.current);
-      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -75,10 +51,6 @@ export const CodebaseChat: React.FC<Props> = ({
   };
 
   const handleStopGeneration = useCallback(() => {
-    if (streamIntervalRef.current) {
-      clearInterval(streamIntervalRef.current);
-      streamIntervalRef.current = null;
-    }
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -94,7 +66,7 @@ export const CodebaseChat: React.FC<Props> = ({
 
   const handleClearChat = useCallback(() => {
     handleStopGeneration();
-    setMessages(initialChatMessages);
+    setMessages([]);
     setExpandedDrawers({});
   }, [handleStopGeneration]);
 
@@ -127,58 +99,7 @@ export const CodebaseChat: React.FC<Props> = ({
       setInputValue('');
       setIsGenerating(true);
 
-      if (offlinePreview) {
-        // Offline preview mode: Realistic simulated token streaming
-        const target = pickFixtureResponse(trimmed);
-        const fullText = target.content;
-        // Split words to stream tokens
-        const words = fullText.split(' ');
-        let currentWordIndex = 0;
-        let accumulatedText = '';
-
-        streamIntervalRef.current = setInterval(() => {
-          if (currentWordIndex >= words.length) {
-            if (streamIntervalRef.current) {
-              clearInterval(streamIntervalRef.current);
-              streamIntervalRef.current = null;
-            }
-            setIsGenerating(false);
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? {
-                      ...msg,
-                      content: fullText,
-                      isStreaming: false,
-                      citations: target.citations,
-                      latencyMs: target.latencyMs,
-                      timings: target.timings,
-                    }
-                  : msg,
-              ),
-            );
-          } else {
-            // Stream 2 words per tick for high realism
-            const nextChunk =
-              words.slice(currentWordIndex, currentWordIndex + 2).join(' ') + ' ';
-            accumulatedText += nextChunk;
-            currentWordIndex += 2;
-
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? {
-                      ...msg,
-                      content: accumulatedText,
-                      citations: target.citations,
-                    }
-                  : msg,
-              ),
-            );
-          }
-        }, 40);
-      } else {
-        // Online mode: Connect to live POST /api/repos/{id}/ask
+      {
         const controller = new AbortController();
         abortControllerRef.current = controller;
         const startTime = performance.now();
@@ -260,7 +181,7 @@ export const CodebaseChat: React.FC<Props> = ({
               msg.id === assistantMessageId
                 ? {
                     ...msg,
-                    content: `⚠️ **Failed to generate answer from server**: ${errorMessage}\n\nYou can switch to **OFFLINE PREVIEW** mode in the header to interact with pre-indexed graph evidence and simulated streaming responses.`,
+                    content: `**Request failed:** ${errorMessage}`,
                     isStreaming: false,
                     error: errorMessage,
                   }
@@ -273,7 +194,7 @@ export const CodebaseChat: React.FC<Props> = ({
         }
       }
     },
-    [apiBase, isGenerating, offlinePreview, repoId],
+    [apiBase, isGenerating, repoId],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -290,11 +211,9 @@ export const CodebaseChat: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 className="codebase-chat__title">CODEBASE CHAT // GRAPHRAG</h2>
           <span
-            className={`codebase-chat__badge ${
-              offlinePreview ? 'codebase-chat__badge--offline' : ''
-            }`}
+            className="codebase-chat__badge"
           >
-            {offlinePreview ? 'OFFLINE FIXTURE STREAM' : 'POST /api/repos/{id}/ask'}
+            POST /api/repos/:id/ask
           </span>
         </div>
 
@@ -514,7 +433,7 @@ export const CodebaseChat: React.FC<Props> = ({
       {/* QUICK PROMPT STARTER CHIPS */}
       <div className="codebase-chat__starters">
         <span className="codebase-chat__starters-label">SUGGESTIONS:</span>
-        {sampleStarterPrompts.map((prompt) => (
+        {['What are the highest-risk symbols?', 'How does the repository index work?', 'Which endpoints have test gaps?'].map((prompt) => (
           <button
             key={prompt}
             type="button"

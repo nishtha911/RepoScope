@@ -6,9 +6,9 @@ import {
   GitPullRequest,
   MessageSquare,
   Sparkles,
-  Settings,
   ChevronDown,
 } from 'lucide-react';
+import type { Repository } from '../../api/repositories';
 
 export type NavTab =
   | 'OVERVIEW'
@@ -21,13 +21,15 @@ export type NavTab =
 interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
-  prCount?: number;
+  repository: Repository;
+  onChangeRepository: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
-  prCount = 3,
+  repository,
+  onChangeRepository,
 }) => {
   const navItems = [
     {
@@ -49,7 +51,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'PR_IMPACT' as NavTab,
       label: 'PR impact',
       icon: GitPullRequest,
-      badge: prCount,
     },
     {
       id: 'RAG' as NavTab,
@@ -84,15 +85,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Repository Selector */}
-        <div className="reposcope-sidebar__repo-box" role="button" tabIndex={0}>
+        <button
+          type="button"
+          className="reposcope-sidebar__repo-box"
+          onClick={onChangeRepository}
+          aria-label="Change repository"
+        >
           <div className="reposcope-sidebar__repo-info">
-            <span className="reposcope-sidebar__repo-name">acme / platform</span>
+            <span className="reposcope-sidebar__repo-name">{repository.name}</span>
             <span className="reposcope-sidebar__repo-visibility">
-              Private repository
+              {repository.status}
             </span>
           </div>
           <ChevronDown size={14} className="reposcope-sidebar__repo-chevron" />
-        </div>
+        </button>
 
         {/* Workspace Navigation */}
         <div className="reposcope-sidebar__nav-section">
@@ -113,11 +119,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <Icon size={16} strokeWidth={1.75} className="reposcope-sidebar__nav-icon" />
                   <span className="reposcope-sidebar__nav-label">{item.label}</span>
-                  {item.badge !== undefined && (
-                    <span className="reposcope-sidebar__nav-badge">
-                      {item.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -127,31 +128,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="reposcope-sidebar__bottom">
         {/* Index Status Card */}
-        <div className="reposcope-sidebar__index-card">
+        <div className="reposcope-sidebar__index-card" aria-live="polite">
           <div className="reposcope-sidebar__index-header">
-            <span className="reposcope-sidebar__status-dot" aria-hidden="true" />
-            <span className="reposcope-sidebar__index-status">Index up to date</span>
+            <span
+              className={`reposcope-sidebar__status-dot reposcope-sidebar__status-dot--${repository.status}`}
+              aria-hidden="true"
+            />
+            <span className="reposcope-sidebar__index-status">
+              {repository.status === 'ready' ? 'Index up to date' : `Index ${repository.status}`}
+            </span>
           </div>
-          <p className="reposcope-sidebar__index-synced">Last synced 2 minutes ago</p>
+          <p className="reposcope-sidebar__index-synced">
+            {repository.file_count ?? 0} files · {repository.symbol_count ?? 0} symbols
+          </p>
           <div className="reposcope-sidebar__index-commit">
-            <span>main · a7c92e1</span>
+            <span>{repository.default_branch} · {repository.head_sha?.slice(0, 7) ?? 'pending'}</span>
             <div className="reposcope-sidebar__index-bar" />
           </div>
         </div>
 
-        {/* Workspace Settings */}
-        <button
-          type="button"
-          className="reposcope-sidebar__settings-btn"
-          onClick={() => onTabChange('OVERVIEW')}
-        >
-          <Settings size={15} strokeWidth={1.75} />
-          <span>Workspace settings</span>
-        </button>
-
-        {/* Org Label */}
         <div className="reposcope-sidebar__org-label">
-          ACME ENGINEERING
+          LIVE REPOSITORY WORKSPACE
         </div>
       </div>
     </aside>

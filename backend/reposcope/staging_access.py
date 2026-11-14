@@ -82,12 +82,15 @@ def protect_app(app, username, password, origins):
     # pass through authentication. This is not the production identity system.
     return CORSMiddleware(StagingBasicAuth(app, username, password),
         allow_origins=origins, allow_credentials=True,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type"])
 
 
 def create_app():
     username, password = credentials(os.environ)
-    origins = allowed_origins(os.getenv("STAGING_CORS_ORIGINS", ""))
+    origins = allowed_origins(
+        os.getenv("STAGING_CORS_ORIGINS", os.getenv("CORS_ORIGINS", ""))
+    )
     from reposcope.main import app
     return protect_app(app, username, password, origins)
