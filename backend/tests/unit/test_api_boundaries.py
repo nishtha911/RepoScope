@@ -5,7 +5,7 @@ are integration-test responsibilities, not claims made by these mocked tests.
 """
 import pytest
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from reposcope.api import repos
 from fastapi import FastAPI
@@ -231,18 +231,14 @@ def test_registration_response_contract_and_enqueue_arguments(isolated_repositor
     assert session.__exit__.call_args.args == (None, None, None)
 
 
-@pytest.mark.parametrize("path,payload,message", [
-    ("/api/repos/1/ask", {"question": "How does resolution work?"}, "Repository Q&A is unavailable"),
-    ("/api/repos/1/pr-impact", {"pr_url": "https://github.com/owner/repo/pull/1"}, "PR URL analysis is unavailable"),
-])
-def test_unconfigured_features_return_documented_error(path, payload, message,
-                                                      isolated_repository_session):
+@pytest.mark.parametrize('path,payload,message', [('/api/repos/1/pr-impact', {'pr_url': 'https://github.com/owner/repo/pull/1'}, 'PR URL analysis is unavailable')])
+def test_unconfigured_features_return_documented_error(path, payload, message, isolated_repository_session):
     response = client.post(path, json=payload)
     assert response.status_code == 501, response.text
-    error = response.json()["error"]
-    assert error["code"] == "NOT_IMPLEMENTED"
-    assert error["status"] == 501
-    assert message in error["message"]
+    error = response.json()['error']
+    assert error['code'] == 'NOT_IMPLEMENTED'
+    assert error['status'] == 501
+    assert message in error['message']
     isolated_repository_session.execute.assert_not_called()
     isolated_repository_session.get.assert_not_called()
 
@@ -259,3 +255,19 @@ def test_missing_record_returns_404_without_real_database(path, isolated_reposit
     response = client.get(path)
     assert response.status_code == 404, response.text
     assert "was not found" in response.json()["error"]["message"]
+
+
+def test_ask_response_contract_uses_qa_service(monkeypatch, isolated_repository_session):
+    expected = AskResponse(
+        answer="The retrieved evidence is insufficient to answer reliably.",
+        evidence=[], gaps=["Retrieved source does not establish this behavior"],
+    )
+    service = AsyncMock(return_value=SimpleNamespace(response=expected))
+    monkeypatch.setattr(repos, "answer_question", service)
+    question = "What does this repository do?"
+    response = client.post("/api/repos/1/ask", json={"question": question})
+    assert response.status_code == 200, response.text
+    assert AskResponse.model_validate(response.json()) == expected
+    service.assert_awaited_once_with(repos.SessionLocal, 1, question)
+    isolated_repository_session.execute.assert_not_called()
+    isolated_repository_session.get.assert_not_called()

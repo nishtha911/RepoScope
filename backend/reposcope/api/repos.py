@@ -38,6 +38,15 @@ from reposcope.retrieval.gemini_embeddings import (
     EmbeddingTransportError, GeminiEmbeddingError,
 )
 
+from reposcope.rag.qa_service import (
+    answer_question, QuestionInputError, QuestionNotFoundError,
+    QuestionNotReadyError, QuestionContextError,
+)
+from reposcope.rag.validator import CitationValidationError
+from reposcope.integrations.llm import (
+    LLMConfigurationError, LLMUnavailable, LLMOutputError, LLMError,
+)
+
 router = APIRouter(tags=["repositories"])
 PathID = Annotated[int, Path(gt=0)]
 
@@ -189,11 +198,44 @@ def search_repo(repo_id: PathID, payload: SearchRequest) -> SearchResponse:
 
 
 @router.post("/repos/{repo_id}/ask", response_model=AskResponse)
-def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
-    raise HTTPException(
-        status_code=501,
-        detail="Repository Q&A is unavailable until retrieval and synthesis services are configured.",
-    )
+async def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
+    try:
+        result = await answer_question(SessionLocal, repo_id, payload.question)
+        return result.response
+    except QuestionInputError:
+        raise HTTPException(status_code=422,
+            detail="Question must contain 1..4096 characters") from None
+    except QuestionNotFoundError:
+        raise HTTPException(status_code=404, detail="Repository was not found") from None
+    except QuestionNotReadyError:
+        raise HTTPException(status_code=409, detail="Repository index is not ready") from None
+    except EmbeddingIndexMismatchError:
+        raise HTTPException(status_code=409,
+            detail="Q&A requires a compatible Gemini index; explicit migration is required") from None
+    except QuestionContextError:
+        raise HTTPException(status_code=409,
+            detail="Verified source context could not be assembled for this snapshot") from None
+    except EmbeddingQuotaError:
+        raise HTTPException(status_code=503,
+            detail="Embedding provider quota is unavailable; try again later") from None
+    except EmbeddingTransportError:
+        raise HTTPException(status_code=503,
+            detail="Embedding provider is temporarily unreachable") from None
+    except (EmbeddingAuthenticationError, EmbeddingConfigurationError, LLMConfigurationError):
+        raise HTTPException(status_code=503,
+            detail="Q&A provider configuration is unavailable") from None
+    except LLMUnavailable:
+        raise HTTPException(status_code=503,
+            detail="Answer-generation provider is temporarily unavailable") from None
+    except (CitationValidationError, LLMOutputError):
+        raise HTTPException(status_code=502,
+            detail="Generated answer failed evidence or output validation; no answer was returned") from None
+    except GeminiEmbeddingError:
+        raise HTTPException(status_code=502,
+            detail="Embedding provider returned an unusable response") from None
+    except LLMError:
+        raise HTTPException(status_code=502,
+            detail="Answer-generation request failed") from None
 
 
 @router.post("/repos/{repo_id}/pr-impact", response_model=PRImpactReport)

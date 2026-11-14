@@ -27,7 +27,7 @@ class SearchRequest(APIModel):
 
 
 class AskRequest(APIModel):
-    question: str = Field(min_length=1, max_length=10000)
+    question: str = Field(min_length=1, max_length=4096)
 
 
 class PRImpactRequest(APIModel):
