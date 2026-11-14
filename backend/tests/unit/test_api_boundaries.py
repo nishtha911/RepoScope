@@ -155,38 +155,37 @@ def test_openapi_uses_documented_symbol_and_feedback_paths():
     ("GET", "/api/symbols/101/neighbors", None, NeighborsResponse),
     ("POST", "/api/repos/1/search", {"q": "resolver", "mode": "hybrid"}, SearchResponse),
 ])
-def test_database_backed_response_contracts(method, path, payload, model,
-                                          isolated_repository_session):
+def test_database_backed_response_contracts(method, path, payload, model, isolated_repository_session, monkeypatch):
+    if path == '/api/repos/1/search':
+        monkeypatch.setattr(repos, 'run_repository_search', MagicMock(return_value=SearchResponse(query=payload['q'], hits=[{'symbol_id': 101, 'name': 'resolver', 'score': 0.04, 'file_path': 'backend/resolver.py', 'snippet': 'def resolver(): pass'}])))
     session = isolated_repository_session
     symbol = fixture_symbol()
-    if path == "/api/repos/1":
+    if path == '/api/repos/1':
         session.get.side_effect = None
-        session.get.return_value = RepositoryORM(id=1, full_name="owner/repo",
-                                                remote_url="https://github.com/owner/repo")
-        session.scalar.side_effect = [SimpleNamespace(id=7, status="ready", commit_sha="a" * 40), 1, 1]
+        session.get.return_value = RepositoryORM(id=1, full_name='owner/repo', remote_url='https://github.com/owner/repo')
+        session.scalar.side_effect = [SimpleNamespace(id=7, status='ready', commit_sha='a' * 40), 1, 1]
     else:
-        row = ((SimpleNamespace(kind="CALLS", confidence=0.9), symbol)
-               if path.endswith("/neighbors") else (symbol, "backend/resolver.py"))
+        row = (SimpleNamespace(kind='CALLS', confidence=0.9), symbol) if path.endswith('/neighbors') else (symbol, 'backend/resolver.py')
         session.execute.side_effect = None
         session.execute.return_value = rows_result([row])
-    response = client.request(method, path, **({"json": payload} if payload is not None else {}))
+    response = client.request(method, path, **{'json': payload} if payload is not None else {})
     assert response.status_code == 200, response.text
     body = response.json()
     model.model_validate(body)
-    if path == "/api/repos/1":
-        assert body["id"] == 1 and body["snapshot_id"] == 7
-        assert body["file_count"] == 1 and body["symbol_count"] == 1
-    elif path.endswith("/symbols"):
-        assert body["symbols"][0]["id"] == 101
-        assert body["symbols"][0]["file_path"] == "backend/resolver.py"
-    elif path.endswith("/neighbors"):
-        assert body["neighbors"][0]["relationship_type"] == "CALLS"
-        assert body["neighbors"][0]["direction"] == "out"
-    elif path.endswith("/search"):
-        assert body["query"] == payload["q"]
-        assert body["hits"][0]["symbol_id"] == 101
+    if path == '/api/repos/1':
+        assert body['id'] == 1 and body['snapshot_id'] == 7
+        assert body['file_count'] == 1 and body['symbol_count'] == 1
+    elif path.endswith('/symbols'):
+        assert body['symbols'][0]['id'] == 101
+        assert body['symbols'][0]['file_path'] == 'backend/resolver.py'
+    elif path.endswith('/neighbors'):
+        assert body['neighbors'][0]['relationship_type'] == 'CALLS'
+        assert body['neighbors'][0]['direction'] == 'out'
+    elif path.endswith('/search'):
+        assert body['query'] == payload['q']
+        assert body['hits'][0]['symbol_id'] == 101
     else:
-        assert body["id"] == 101 and body["start_line"] == 10
+        assert body['id'] == 101 and body['start_line'] == 10
 
 
 def test_registration_response_contract_and_enqueue_arguments(isolated_repository_session, monkeypatch):

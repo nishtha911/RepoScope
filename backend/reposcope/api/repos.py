@@ -29,6 +29,15 @@ from reposcope.models import (
     Symbol,
 )
 
+from reposcope.retrieval.search_service import (
+    run_repository_search, SearchNotFoundError, SearchNotReadyError, SearchResultError,
+)
+from reposcope.retrieval.vector import EmbeddingIndexMismatchError
+from reposcope.retrieval.gemini_embeddings import (
+    EmbeddingAuthenticationError, EmbeddingConfigurationError, EmbeddingQuotaError,
+    EmbeddingTransportError, GeminiEmbeddingError,
+)
+
 router = APIRouter(tags=["repositories"])
 PathID = Annotated[int, Path(gt=0)]
 
@@ -154,19 +163,29 @@ def get_symbols(
 
 @router.post("/repos/{repo_id}/search", response_model=SearchResponse)
 def search_repo(repo_id: PathID, payload: SearchRequest) -> SearchResponse:
-    with SessionLocal() as session:
-        pattern = f"%{payload.q.strip()}%"
-        rows = session.execute(
-            select(Symbol, File.path).join(File, Symbol.file_id == File.id)
-            .where(File.repository_id == repo_id)
-            .where(or_(Symbol.name.ilike(pattern), Symbol.qualname.ilike(pattern), File.path.ilike(pattern)))
-            .limit(100)
-        ).all()
-        return SearchResponse(query=payload.q, hits=[
-            SearchHit(symbol_id=s.id, name=s.qualname or s.name, score=1.0,
-                file_path=path, snippet=f"{s.name} ({s.kind})")
-            for s, path in rows
-        ])
+    try:
+        with SessionLocal() as session:
+            return run_repository_search(session, repo_id=repo_id,
+                query=payload.q, mode=payload.mode, limit=10)
+    except SearchNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from None
+    except (SearchNotReadyError, EmbeddingIndexMismatchError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    except EmbeddingQuotaError:
+        raise HTTPException(status_code=503,
+            detail="Embedding provider quota is unavailable; try again later or use lexical search") from None
+    except (EmbeddingAuthenticationError, EmbeddingConfigurationError):
+        raise HTTPException(status_code=503,
+            detail="Embedding provider is not configured or accessible") from None
+    except EmbeddingTransportError:
+        raise HTTPException(status_code=503,
+            detail="Embedding provider is temporarily unreachable; try again later or use lexical search") from None
+    except GeminiEmbeddingError:
+        raise HTTPException(status_code=502,
+            detail="Embedding provider returned an unusable response") from None
+    except SearchResultError:
+        raise HTTPException(status_code=500,
+            detail="Indexed search metadata is inconsistent") from None
 
 
 @router.post("/repos/{repo_id}/ask", response_model=AskResponse)
