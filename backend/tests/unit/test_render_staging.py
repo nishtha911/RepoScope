@@ -151,12 +151,23 @@ def build_module():
     return module
 
 
-def test_build_keeps_ml_dependencies_and_separates_cpu_torch():
+def test_build_uses_hosted_embeddings_without_local_ml():
     pin, remaining = build_module().partition_requirements(
-        "torch==2.14.1\nsentence-transformers==6.1.0\npytest==9.1.1\nfastapi>=0.115,<1\n")
+        "torch==2.14.1\n"
+        "sentence-transformers==6.1.0\n"
+        "pytest==9.1.1\n"
+        "httpx>=0.27,<1\n"
+        "fastapi>=0.115,<1\n"
+    )
+
+    # Parsed for audit only; the hosted builder does not install this pin.
     assert pin == "2.14.1"
-    assert "sentence-transformers==6.1.0" in remaining
-    assert not any(line.startswith("pytest") or line.startswith("torch") for line in remaining)
+    assert "httpx>=0.27,<1" in remaining
+    assert "fastapi>=0.115,<1" in remaining
+    assert not any(
+        line.startswith(("torch", "sentence-transformers", "pytest"))
+        for line in remaining
+    )
 
 
 @pytest.mark.parametrize("source", ["fastapi>=0.115", "torch>=2", "torch==2.14.1\ntorch==2.14.1"])

@@ -16,8 +16,7 @@ from reposcope.ingestion.scanner import MAX_FILE_SIZE_BYTES, scan_repository
 from reposcope.parsing.python_parser import parse_python
 from reposcope.retrieval.chunker import build_symbol_chunks
 
-INDEX_VERSION = "python-symbols-bge-small-v1"
-EMBEDDING_DIMENSION = 384
+from reposcope.retrieval.gemini_embeddings import INDEX_VERSION, EMBEDDING_DIMENSION
 
 
 class IndexPreparationError(RuntimeError):
