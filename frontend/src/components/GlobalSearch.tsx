@@ -10,6 +10,7 @@ import type {
   SearchMode,
 } from '../api/search';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { fixtureSearchHits } from '../fixtures/search';
 import './GlobalSearch.css';
 
 interface Props {
@@ -36,6 +37,7 @@ export default function GlobalSearch({
   query,
   onQueryChange,
   apiBase,
+  offlinePreview = false,
   onSelectSymbol,
   onLatencyChange,
 }: Props) {
@@ -69,7 +71,7 @@ export default function GlobalSearch({
         signal,
         apiBase,
       }),
-    enabled: ready,
+    enabled: ready && !offlinePreview,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -79,7 +81,17 @@ export default function GlobalSearch({
   let allHits: SearchHit[] = [];
   let latencyMs = 0;
 
-  if (searchQuery.data) {
+  if (offlinePreview) {
+    if (debouncedQuery.length > 0) {
+      allHits = fixtureSearchHits.filter(
+        (h) =>
+          h.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          h.file_path.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          h.snippet.toLowerCase().includes(debouncedQuery.toLowerCase()),
+      );
+      latencyMs = 12;
+    }
+  } else if (searchQuery.data) {
     allHits = searchQuery.data.hits;
     latencyMs = searchQuery.data.latency_ms;
   }
@@ -112,8 +124,8 @@ export default function GlobalSearch({
           ? docHits
           : endpointHits;
 
-  const isPending = ready && searchQuery.isPending;
-  const isError = ready && searchQuery.isError;
+  const isPending = !offlinePreview && ready && searchQuery.isPending;
+  const isError = !offlinePreview && ready && searchQuery.isError;
   const error = searchQuery.error;
 
   return (
@@ -123,7 +135,7 @@ export default function GlobalSearch({
         <h2 id={`${inputId}-title`}>GLOBAL CODEBASE SEARCH</h2>
 
         <span className="global-search__badge">
-          POST /api/repos/:id/search
+          {offlinePreview ? 'OFFLINE FIXTURE' : 'POST /api/repos/:id/search'}
         </span>
       </header>
 
