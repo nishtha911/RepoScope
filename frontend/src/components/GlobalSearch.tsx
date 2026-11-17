@@ -247,7 +247,9 @@ export default function GlobalSearch({
         <div role="alert" className="global-search__error">
           <h3>SEARCH FAILED</h3>
           <p>
-            {error instanceof Error ? error.message : 'Unknown search error'}
+            {error instanceof SearchApiError && error.status === 429
+              ? `Search is temporarily rate limited${error.retryAfterSeconds ? `; retry in ${error.retryAfterSeconds}s.` : '.'}`
+              : error instanceof Error ? error.message : 'Unknown search error'}
             {error instanceof SearchApiError ? ` [${error.code}]` : ''}
           </p>
 

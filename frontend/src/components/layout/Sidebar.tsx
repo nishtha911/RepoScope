@@ -34,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const ingestionStatus = repository.ingestion_status ?? repository.status;
   const statusTone = repository.status === 'ready' ? 'ready' : ingestionStatus;
   const progress = repository.ingestion_progress_percent;
+  const isIngesting = ingestionStatus === 'queued' || ingestionStatus === 'running';
   const navItems = [
     {
       id: 'OVERVIEW' as NavTab,
@@ -138,7 +139,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-hidden="true"
             />
             <span className="reposcope-sidebar__index-status">
-              {repository.status === 'ready'
+              {isIngesting
+                ? `${repository.ingestion_stage ?? (ingestionStatus === 'queued' ? 'Queued' : 'Indexing')} ${progress}%`
+                : repository.status === 'ready'
                 ? 'Index up to date'
                 : `${repository.ingestion_stage ?? 'Index'} ${progress}%`}
             </span>
@@ -146,6 +149,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <p className="reposcope-sidebar__index-synced">
             {repository.file_count ?? 0} files · {repository.symbol_count ?? 0} symbols
           </p>
+          {isIngesting && (
+            <p className="reposcope-sidebar__index-synced">
+              Indexing is still running. This workspace updates automatically.
+            </p>
+          )}
           {repository.ingestion_status === 'failed' && repository.ingestion_error && (
             <p className="reposcope-sidebar__index-synced" role="alert">
               Ingestion failed: {repository.ingestion_error}

@@ -5,7 +5,8 @@ from typing import Annotated, Literal
 from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import aliased
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from reposcope.api.rate_limit import rate_limit
 
 from reposcope.contracts.api import (
     AskRequest, AskResponse, AskTimings, FeedbackRequest, FeedbackResponse,
@@ -19,7 +20,7 @@ from reposcope.contracts.pr_report import PRImpactReport
 from reposcope.contracts.vocabulary import Direction, EdgeKind, SymbolKind
 from typing import get_args
 from reposcope.db.session import SessionLocal
-from reposcope.ingestion.index_preparation import INDEX_VERSION
+from reposcope.retrieval.gemini_embeddings import INDEX_VERSION
 from reposcope.jobs.queue import enqueue_job
 from reposcope.models import (
     Edge,
@@ -52,7 +53,12 @@ router = APIRouter(tags=["repositories"])
 PathID = Annotated[int, Path(gt=0)]
 
 
-@router.post("/repos", status_code=status.HTTP_202_ACCEPTED, response_model=RegisterRepoResponse)
+@router.post(
+    "/repos",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=RegisterRepoResponse,
+    dependencies=[Depends(rate_limit(max_requests=10, window_seconds=60))],
+)
 def register_repo(payload: RegisterRepoRequest) -> RegisterRepoResponse:
     # Request validation already restricts URLs to credential-free github.com HTTPS.
     parts = str(payload.url).rstrip("/").split("/")[-2:]
@@ -183,7 +189,11 @@ def get_symbols(
         ])
 
 
-@router.post("/repos/{repo_id}/search", response_model=SearchResponse)
+@router.post(
+    "/repos/{repo_id}/search",
+    response_model=SearchResponse,
+    dependencies=[Depends(rate_limit(max_requests=60, window_seconds=60))],
+)
 def search_repo(repo_id: PathID, payload: SearchRequest) -> SearchResponse:
     try:
         with SessionLocal() as session:
@@ -210,7 +220,11 @@ def search_repo(repo_id: PathID, payload: SearchRequest) -> SearchResponse:
             detail="Indexed search metadata is inconsistent") from None
 
 
-@router.post("/repos/{repo_id}/ask", response_model=AskResponse)
+@router.post(
+    "/repos/{repo_id}/ask",
+    response_model=AskResponse,
+    dependencies=[Depends(rate_limit(max_requests=20, window_seconds=60))],
+)
 async def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
     try:
         result = await answer_question(SessionLocal, repo_id, payload.question)
@@ -251,7 +265,11 @@ async def ask_repo(repo_id: PathID, payload: AskRequest) -> AskResponse:
             detail="Answer-generation request failed") from None
 
 
-@router.post("/repos/{repo_id}/pr-impact", response_model=PRImpactReport)
+@router.post(
+    "/repos/{repo_id}/pr-impact",
+    response_model=PRImpactReport,
+    dependencies=[Depends(rate_limit(max_requests=30, window_seconds=60))],
+)
 def pr_impact(repo_id: PathID, payload: PRImpactRequest) -> PRImpactReport:
     if payload.patch and not payload.pr_url:
         line_count = len(payload.patch.splitlines())

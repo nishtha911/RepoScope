@@ -1,6 +1,9 @@
 """Extract callable parameter metadata from Python Tree-sitter nodes."""
 
-from tree_sitter import Node
+try:
+    from tree_sitter import Node
+except ImportError:
+    Node = None  # type: ignore[assignment]
 
 from reposcope.contracts.parsing import ParsedParameter
 

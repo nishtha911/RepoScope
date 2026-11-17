@@ -146,6 +146,31 @@ describe('searchRepo', () => {
     );
   });
 
+  it('exposes retry timing for rate-limited responses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: {
+              message: 'Too many requests',
+              code: 'RATE_LIMITED',
+              details: { retry_after: 12 },
+            },
+          }),
+          { status: 429, headers: { 'Retry-After': '12' } },
+        ),
+      ),
+    );
+
+    await expect(searchRepo({ repoId: 1, query: 'test' })).rejects.toMatchObject({
+      message: 'Too many requests',
+      code: 'RATE_LIMITED',
+      status: 429,
+      retryAfterSeconds: 12,
+    });
+  });
+
   it('rejects invalid response shape', async () => {
     vi.stubGlobal(
       'fetch',

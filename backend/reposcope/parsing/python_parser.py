@@ -7,8 +7,14 @@ from io import BytesIO
 from tokenize import detect_encoding
 from typing import Iterator
 
-import tree_sitter_python
-from tree_sitter import Language, Node, Parser
+try:
+    import tree_sitter_python
+    from tree_sitter import Language, Node, Parser
+except ImportError:
+    tree_sitter_python = None  # type: ignore[assignment]
+    Language = None  # type: ignore[assignment]
+    Node = None  # type: ignore[assignment]
+    Parser = None  # type: ignore[assignment]
 
 from reposcope.contracts.parsing import (
     ParsedFile,

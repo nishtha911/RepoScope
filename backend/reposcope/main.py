@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from reposcope.staging_access import allowed_origins
 from reposcope.api import health
+from reposcope.api.rate_limit import RateLimitExceeded
 from reposcope.contracts.api import ErrorDetail, ErrorResponse
 
 # NOTE: do not import reposcope.config here; it raises at import time when
@@ -56,6 +57,18 @@ def error_response(
         code=code, message=message, details=details or {}, status=status,
     ))
     return JSONResponse(status_code=status, content=envelope.model_dump(mode="json"))
+
+
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    response = error_response(
+        429,
+        "RATE_LIMITED",
+        exc.detail,
+        {"retry_after": exc.retry_after},
+    )
+    response.headers["Retry-After"] = str(exc.retry_after)
+    return response
 
 
 @app.exception_handler(StarletteHTTPException)

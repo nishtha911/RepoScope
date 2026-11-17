@@ -3,11 +3,13 @@ export const API_BASE =
 
 export class ApiError extends Error {
   readonly status: number;
+  readonly retryAfterSeconds: number | null;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, retryAfterSeconds: number | null = null) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -34,7 +36,21 @@ export async function apiRequest<T>(
             typeof body.detail === 'string'
           ? body.detail
           : `Request failed (HTTP ${response.status}).`;
-    throw new ApiError(message, response.status);
+    const retryHeader = Number(response.headers.get('Retry-After'));
+    const details =
+      typeof body === 'object' && body !== null && 'error' in body &&
+      typeof body.error === 'object' && body.error !== null &&
+      'details' in body.error && typeof body.error.details === 'object' &&
+      body.error.details !== null && 'retry_after' in body.error.details
+        ? Number(body.error.details.retry_after)
+        : NaN;
+    const retryAfterSeconds =
+      response.status === 429 && Number.isFinite(retryHeader) && retryHeader > 0
+        ? Math.ceil(retryHeader)
+        : response.status === 429 && Number.isFinite(details) && details > 0
+          ? Math.ceil(details)
+          : null;
+    throw new ApiError(message, response.status, retryAfterSeconds);
   }
   return body as T;
 }

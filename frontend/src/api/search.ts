@@ -33,11 +33,13 @@ interface RawSearchResponse {
 export class SearchApiError extends Error {
   readonly status: number;
   readonly code: string;
-  constructor(message: string, status: number, code: string) {
+  readonly retryAfterSeconds: number | null;
+  constructor(message: string, status: number, code: string, retryAfterSeconds: number | null = null) {
     super(message);
     this.name = 'SearchApiError';
     this.status = status;
     this.code = code;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -165,10 +167,20 @@ export async function searchRepo({
       errorMessage ??
       detail ??
       `Search failed (HTTP ${response.status}).`;
+    const retryHeader = Number(response.headers.get('Retry-After'));
+    const retryDetails =
+      error && record(error.details) ? Number(error.details.retry_after) : NaN;
+    const retryAfterSeconds =
+      response.status === 429 && Number.isFinite(retryHeader) && retryHeader > 0
+        ? Math.ceil(retryHeader)
+        : response.status === 429 && Number.isFinite(retryDetails) && retryDetails > 0
+          ? Math.ceil(retryDetails)
+          : null;
     throw new SearchApiError(
       message,
       response.status,
       error && text(error.code) ? error.code : 'HTTP_ERROR',
+      retryAfterSeconds,
     );
   }
 

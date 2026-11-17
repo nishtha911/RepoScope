@@ -2,7 +2,10 @@
 
 import ast
 
-from tree_sitter import Node
+try:
+    from tree_sitter import Node
+except ImportError:
+    Node = None  # type: ignore[assignment]
 
 
 COMPLEXITY_POLICY = "cc_python_v1"

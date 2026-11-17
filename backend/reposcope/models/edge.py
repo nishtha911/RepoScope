@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from reposcope.models.base import Base
@@ -28,6 +28,18 @@ class Edge(Base):
             "target_symbol_id",
             "kind",
             name="uq_edges_source_target_kind",
+        ),
+        Index(
+            "ix_edges_target_kind_source",
+            "target_symbol_id",
+            "kind",
+            "source_symbol_id",
+        ),
+        Index(
+            "ix_edges_source_kind_target",
+            "source_symbol_id",
+            "kind",
+            "target_symbol_id",
         ),
     )
 

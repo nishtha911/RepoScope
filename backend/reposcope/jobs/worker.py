@@ -41,6 +41,10 @@ class JobDeadlineExceeded(RuntimeError):
     pass
 
 
+class WorkerMemoryExceededError(RuntimeError):
+    pass
+
+
 class RepositoryURLRejected(ValueError):
     pass
 
@@ -211,9 +215,21 @@ def build_services(session_factory) -> WorkerServices:
         progress=progress)
 
 
+def _get_current_memory_mb() -> float:
+    try:
+        import psutil
+        return psutil.Process().memory_info().rss / (1024 * 1024)
+    except Exception:
+        try:
+            import resource
+            return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+        except Exception:
+            return 0.0
+
+
 def run_once(services: WorkerServices, workspace, *, repository_id=None,
              lease_seconds=300, heartbeat_interval=None, clone_timeout_seconds=120,
-             max_job_seconds=1800, stop_event=None) -> WorkerOutcome:
+             max_job_seconds=1800, max_memory_mb=None, stop_event=None) -> WorkerOutcome:
     """Consume at most one job. Source processing must remain cooperative.
 
     Shutdown/deadline checks run between stages and embedding batches, not inside
@@ -229,6 +245,9 @@ def run_once(services: WorkerServices, workspace, *, repository_id=None,
                         ("max_job_seconds", max_job_seconds)):
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be positive and finite")
+    if max_memory_mb is not None:
+        if isinstance(max_memory_mb, bool) or not isinstance(max_memory_mb, (int, float)) or not math.isfinite(max_memory_mb) or max_memory_mb <= 0:
+            raise ValueError("max_memory_mb must be a positive finite number")
     interval = lease_seconds / 3 if heartbeat_interval is None else heartbeat_interval
     if (isinstance(interval, bool) or not isinstance(interval, (int, float))
             or not math.isfinite(interval) or not 0 < interval < lease_seconds / 2):
@@ -253,6 +272,12 @@ def run_once(services: WorkerServices, workspace, *, repository_id=None,
             raise WorkerStopped()
         if time.monotonic() - started > max_job_seconds:
             raise JobDeadlineExceeded()
+        if max_memory_mb is not None:
+            current_mb = _get_current_memory_mb()
+            if current_mb > max_memory_mb:
+                raise WorkerMemoryExceededError(
+                    f"Memory limit exceeded: {current_mb:.1f}MB > {max_memory_mb}MB"
+                )
 
     try:
         heartbeat.start()
@@ -326,6 +351,11 @@ def main(argv=None) -> int:
     parser.add_argument("--lease-seconds", type=int, default=300)
     parser.add_argument("--clone-timeout-seconds", type=float, default=120)
     parser.add_argument("--max-job-seconds", type=float, default=1800)
+    parser.add_argument(
+        "--max-memory-mb",
+        type=float,
+        default=float(os.getenv("REPOSCOPE_MAX_WORKER_MEMORY_MB", "1024")),
+    )
     args = parser.parse_args(argv)
     if not args.workspace or not args.expected_db_host:
         parser.error("Specify a private workspace and the verified database hostname")
@@ -361,7 +391,8 @@ def main(argv=None) -> int:
             try:
                 result = run_once(services, workspace, repository_id=args.repo_id,
                     lease_seconds=args.lease_seconds, clone_timeout_seconds=args.clone_timeout_seconds,
-                    max_job_seconds=args.max_job_seconds, stop_event=stop)
+                    max_job_seconds=args.max_job_seconds, max_memory_mb=args.max_memory_mb,
+                    stop_event=stop)
                 print(json.dumps(asdict(result)), flush=True)
                 if not result.cleanup_ok:
                     return 3  # Do not accumulate clones after unsafe/failed cleanup.

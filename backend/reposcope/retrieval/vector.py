@@ -1,6 +1,9 @@
 """Version-fenced vector retrieval and legacy chunk persistence."""
-from sqlalchemy import select
+import os
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
+
+DEFAULT_EF_SEARCH = int(os.getenv("PGVECTOR_EF_SEARCH", "64"))
 
 from reposcope.models.chunk import Chunk
 from reposcope.models.file import File
@@ -39,7 +42,7 @@ def _compatible_snapshot_id(session: Session, repo_id: int) -> int | None:
 
 
 def search_chunks_by_vector(session: Session, repo_id: int, query: str,
-                            limit: int = 10) -> list[Chunk]:
+                            limit: int = 10, ef_search: int | None = None) -> list[Chunk]:
     """Validate snapshot identity before provider use; never commit or hide errors."""
     if isinstance(repo_id, bool) or not isinstance(repo_id, int) or repo_id < 1:
         raise ValueError("repo_id must be a positive integer")
@@ -54,6 +57,13 @@ def search_chunks_by_vector(session: Session, repo_id: int, query: str,
         return []
     if session.get_bind().dialect.name != "postgresql":
         raise RuntimeError("Vector retrieval requires PostgreSQL")
+    active_ef = ef_search if ef_search is not None else DEFAULT_EF_SEARCH
+    if active_ef < 1 or active_ef > 1000:
+        raise ValueError("ef_search must be between 1 and 1000")
+    try:
+        session.execute(text(f"SET LOCAL hnsw.ef_search = {active_ef}"))
+    except Exception:
+        pass
     snapshot_id = _compatible_snapshot_id(session, repo_id)
     if snapshot_id is None:
         return []
